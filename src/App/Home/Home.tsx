@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useState } from "react";
 import {
+  Dimensions,
+  Image,
+  ImageSourcePropType,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  Dimensions,
-  TouchableOpacity,
-  ScrollView,
   TextInput,
-  Image,
-  SafeAreaView,
-  ImageSourcePropType,
+  TouchableOpacity,
   useWindowDimensions,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 interface Tags {
   id: string | undefined;
@@ -38,7 +39,7 @@ const Home: React.FC = () => {
 
   // * Search
   const [text, setText] = useState<string>();
-  const [styles, setStyleSheet] = useState<any>(createStyle(SCREEN_WIDTH, SCREEN_HEIGHT));
+  const [styles, setStyleSheet] = useState(createStyle(SCREEN_WIDTH, SCREEN_HEIGHT));
 
   const clearTextHandler = () => {
     console.log("Search Text Delete Done");
@@ -50,19 +51,19 @@ const Home: React.FC = () => {
   const [currentinfoPage, setCurrentinfoPage] = useState(0);
   const infoPageCount = 3; // 페이지 수
 
-  const [info, setInfo] = useState<ImageSourcePropType[]>([
+  const [info /*, setInfo */] = useState<ImageSourcePropType[]>([
     require("../../../assets/image1.png"),
     require("../../../assets/image2.png"),
     require("../../../assets/image3.png"),
   ]); // 들어갈 컨텐츠
 
-  const handleScroll = (event: any) => {
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const infoPage = Math.round((offsetX / SCREEN_WIDTH) * 0.9);
     setCurrentinfoPage(infoPage);
   };
 
-  const createInfoView = (info: ImageSourcePropType[], index: number) => {
+  const createInfoView = (info: ImageSourcePropType[]) => {
     return info.map((image: ImageSourcePropType, index: number) => (
       <View
         key={index}
@@ -85,9 +86,8 @@ const Home: React.FC = () => {
 
   // Info *
   // * HotTags
-  const [tags, setTags] = useState<Tags[]>([
-    //useState를 이용해 상태 변경
-    { id: "1", title: "#오정민" }, //초기값 설정
+  const [tags /*, setTags*/] = useState<Tags[]>([
+    { id: "1", title: "#오정민" },
     { id: "2", title: "#앗뜨거 앗뜨" },
     { id: "3", title: "#부트캠프" },
     { id: "4", title: "#React" },
@@ -96,28 +96,6 @@ const Home: React.FC = () => {
     { id: "7", title: "과끼리" },
     { id: "8", title: "Tovelop" },
   ]);
-
-  useEffect(() => {
-    // 백엔드에서 데이터를 받아 상태 변경 tagFetchData();
-  }, []);
-
-  /*const tagFetchData = async () => {
-    try {
-      // 백엔드에서 데이터를 받아오는 비동기 요청
-      const response = await fetch('API');
-      const data = await response.json();
-
-      // 받아온 데이터를 기반으로 배열 생성 후 상태 변경
-      const tagList: Tags[] = data.map((tag: any) => ({
-        id: tags.id,
-        title: tags.title,
-      }));
-
-      setTags(tagList);
-    } catch (error) {
-      console.error('Fetching data error :', error);
-    }
-  };*/
 
   const createTagView = (tag: Tags, index: number) => {
     const colors = [
@@ -241,7 +219,7 @@ const Home: React.FC = () => {
             <View style={[styles.infoPage, { backgroundColor: "green" }]}>
               
             </View> */}
-            {createInfoView(info, currentinfoPage)}
+            {createInfoView(info)}
           </ScrollView>
 
           <View style={styles.infoDotBox}>

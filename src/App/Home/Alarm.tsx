@@ -1,6 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { Feather, FontAwesome } from "@expo/vector-icons";
-import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const boardData = [
   {
