@@ -4,6 +4,7 @@ import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "
 import { TAutocompleteDropdownItem } from "react-native-autocomplete-dropdown";
 
 import { searchList } from "../../types/SearchList";
+import { Container, TextButton } from "../common";
 
 const Search = (props, { list }: { list: Promise<searchList[]> }) => {
   const [search, setSearch] = useState("");
@@ -13,7 +14,6 @@ const Search = (props, { list }: { list: Promise<searchList[]> }) => {
     setSearch(itemTitle);
     setFieldValue(name, itemTitle);
   };
-
   const {
     field: { name, onBlur, value },
     form: { setFieldValue, setFieldTouched },
@@ -23,11 +23,6 @@ const Search = (props, { list }: { list: Promise<searchList[]> }) => {
   useEffect(() => {
     props.list().then((res: any) => {
       setData(res.data);
-      // const formattedData = res.data.map((item: any, index: any) => ({
-      //   id: index.toString(),
-      //   title: item
-      // }));
-      // setFilteredData(formattedData);
       return res.data;
     });
   }, [search, list]);
@@ -44,32 +39,27 @@ const Search = (props, { list }: { list: Promise<searchList[]> }) => {
 
   const updateSearch = (text: string) => {
     setSearch(text);
-
     // 검색어를 이용하여 데이터를 필터링
     const filteredItems = data.filter(item => item.includes(text));
-    console.log(text);
-    console.log(filteredItems);
-    const formattedData = filteredItems
-      .map((item, index) => ({
-        id: index.toString(),
-        title: item.toString(),
-      }))
-      .flat();
+    const formattedData = filteredItems.map((item, index) => ({
+      id: index.toString(),
+      title: item.toString(),
+    }));
     setFilteredData(formattedData);
   };
 
   const renderItemGroup = (itemGroup: TAutocompleteDropdownItem[]) => (
-    <View style={styles.itemContainer}>
+    <Container style={{ padding: 20 }}>
       {itemGroup.map(item => (
-        <TouchableOpacity
+        <TextButton
           key={item.id}
-          style={styles.itemContainer}
+          style={{ backgroundColor: "white", borderBottomColor: "#ccc", borderBottomWidth: 1 }}
           onPress={() => (item && item.title ? handleItemClick(item.title) : null)}
         >
-          <Text style={styles.itemText}>{item.title}</Text>
-        </TouchableOpacity>
+          {item.title}
+        </TextButton>
       ))}
-    </View>
+    </Container>
   );
   return (
     <View style={styles.container}>
@@ -95,37 +85,18 @@ const Search = (props, { list }: { list: Promise<searchList[]> }) => {
         pagingEnabled // 이 옵션을 추가하여 3개씩 스크롤되도록 설정합니다.
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+          >
             {renderItemGroup(item)}
           </ScrollView>
         )}
       />
-
-      {/* <AutocompleteDropdown
-        clearOnFocus={false}
-        closeOnBlur={true}
-        closeOnSubmit={false}
-        initialValue={selectedItem}
-        onSelectItem={(item: TAutocompleteDropdownItem | null) => {
-          if (item) {
-            setSearch(item.title || "");
-            setSelectedItem(item.title || "");
-            setFieldValue(name, item.title || "");
-          } else {
-            setSearch("");
-            setSelectedItem("");
-            setFieldValue(name, "");
-          }
-        }}
-        dataSet={filteredData.map((item, index) => ({
-          id: index.toString(),
-          title: item.title || "",
-        }))}
-      /> */}
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -141,19 +112,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
     borderRadius: 30,
   },
-  itemContainer: {
-    padding: 20,
-    borderBottomColor: "#ccc",
-    borderBottomWidth: 1,
-  },
-  itemText: {
-    fontSize: 16,
-  },
   errorText: {
     fontSize: 12,
     marginHorizontal: 15,
     color: "red",
   },
 });
-
 export default Search;

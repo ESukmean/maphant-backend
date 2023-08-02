@@ -15,21 +15,25 @@ type Method = "GET" | "POST" | "PUT" | "DELETE";
 function fetchAPI<T extends statusResponse>(method: Method, url: string, body?: object) {
   return UserStorage.getUserToken().then(token => {
     const timestamp = Math.floor(Date.now() / 1000).toString();
+    const headers: any = {
+      "Content-Type": "application/json",
+    };
+    if (token != undefined) {
+      headers["x-auth"] = token?.token;
+      headers["x-timestamp"] = timestamp;
+      headers["x-sign"] = sha512(timestamp + token?.privKey);
+    }
     const options: { method: Method; headers: HeadersInit; body?: string } = {
       method: method,
-      headers: {
-        "Content-Type": "application/json",
-        "x-auth": token?.token ?? "",
-        "x-timestamp": timestamp,
-        "x-sign": sha512(timestamp + token?.privKey) ?? "",
-      },
+      headers,
     };
-
     if (method != "GET") {
       options.body = JSON.stringify(body);
     }
-
-    return fetch(`${constraints.SERVER_URL}${url}`, options).then(res => res.json() as Promise<T>);
+    console.log(`${constraints.SERVER_URL}${url}`, options);
+    return fetch(`${constraints.SERVER_URL}${url}`, options)
+      .then(res => res.json())
+      .catch(error => console.log(error));
   });
 }
 

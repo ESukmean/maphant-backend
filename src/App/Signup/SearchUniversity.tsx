@@ -7,6 +7,7 @@ import * as Yup from "yup";
 import { categorymajor, fieldList, majorList } from "../../Api/member/signUp";
 import { Container, TextButton } from "../../components/common";
 import Search from "../../components/Member/Search";
+import { ScrollView } from "react-native-gesture-handler";
 
 interface ISearchForm {
   field: string;
@@ -28,52 +29,56 @@ const SearchUniversity: React.FC = () => {
   // const navigation = useNavigation<NavigationProp<{ Login: ISearchForm }>>();
 
   return (
-    <Formik
-      initialValues={SearchForm}
-      validationSchema={validationSchema}
-      onSubmit={async values => {
-        console.log(route.params.email);
-        await categorymajor(route.params.email, values.field, values.major).then(response => {
-          if (response.success) {
-            navigation.navigate("Login");
-          }
-        });
-      }}
-    >
-      {({ handleSubmit }) => (
-        <Container style={styles.container}>
-          <Container style={styles.FlistContainer}>
-            <Field
-              placeholder="계열 입력해 주세요."
-              name="field"
-              list={fieldList}
-              component={Search}
-            />
-          </Container>
-          <Container style={styles.MlistContainer}>
-            <Field
-              placeholder="전공 입력해 주세요."
-              name="major"
-              list={majorList}
-              component={Search}
-            />
-          </Container>
-          <TextButton
-            style={{
-              backgroundColor: "#000",
-              paddingVertical: 15,
-              paddingHorizontal: 20,
-              borderRadius: 30,
-              marginTop: 40,
-            }}
-            fontColor={"white"}
-            onPress={handleSubmit}
-          >
-            Finish
-          </TextButton>
-        </Container>
-      )}
-    </Formik>
+    <Container isForceKeyboardAvoiding={true}>
+      <ScrollView>
+        <Formik
+          initialValues={SearchForm}
+          validationSchema={validationSchema}
+          onSubmit={async values => {
+            console.log(route.params.email);
+            await categorymajor(route.params.email, values.field, values.major).then(response => {
+              if (response.success) {
+                navigation.navigate("Login");
+              }
+            });
+          }}
+        >
+          {({ handleSubmit }) => (
+            <Container style={styles.container}>
+              <Container style={styles.FlistContainer}>
+                <Field
+                  placeholder="계열 입력해 주세요."
+                  name="field"
+                  list={fieldList}
+                  component={Search}
+                />
+              </Container>
+              <Container style={styles.MlistContainer}>
+                <Field
+                  placeholder="전공 입력해 주세요."
+                  name="major"
+                  list={majorList}
+                  component={Search}
+                />
+              </Container>
+              <TextButton
+                style={{
+                  backgroundColor: "#000",
+                  paddingVertical: 15,
+                  paddingHorizontal: 20,
+                  borderRadius: 30,
+                  marginTop: 40,
+                }}
+                fontColor={"white"}
+                onPress={handleSubmit}
+              >
+                Finish
+              </TextButton>
+            </Container>
+          )}
+        </Formik>
+      </ScrollView>
+    </Container>
   );
 };
 

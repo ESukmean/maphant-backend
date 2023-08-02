@@ -28,8 +28,6 @@ const Confirm: React.FC = () => {
 
   const checkCode = (values: ISignupForm) => {
     values.email = email;
-    console.log(values);
-    console.log("다음버튼 클릭");
     if (showNextButton) {
       navigation.navigate("SearchUniversity", values);
     }
@@ -49,7 +47,7 @@ const Confirm: React.FC = () => {
           setShowNextButton(true);
         }
       })
-      .catch(error => console.log(error));
+      .catch(error => console.error(error));
   };
 
   useEffect(() => {
@@ -92,7 +90,7 @@ const Confirm: React.FC = () => {
       <Container style={{ marginBottom: 20 }}>
         <Text>인증 번호</Text>
         <Input
-          ref={verificationCodeInputRef}
+          inputRef={verificationCodeInputRef}
           value={verificationCode}
           onChangeText={setVerificationCode}
           placeholder="인증번호 6자리를 입력해주세요."
@@ -135,7 +133,7 @@ const Confirm: React.FC = () => {
             },
           ]}
         >
-          다음
+          눌려
         </TextButton>
       )}
     </Container>
