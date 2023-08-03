@@ -12,20 +12,11 @@ import {
   validateNickname,
   validatePassword,
 } from "../../Api/member/signUp";
+import { Container, Spacer, TextButton } from "../../components/common";
 import CustomInput from "../../components/Member/CustomInput";
 import Search from "../../components/Member/Search";
-
-interface ISignupForm {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  nickname: string;
-  name: string;
-  phoneNumber: string;
-  studentNumber: string;
-  university: string;
-}
-import { Container, Spacer, TextButton } from "../../components/common";
+import UIStore from "../../storage/UIStore";
+import { ISignupForm } from "../../types/SignUp";
 
 const validationSchema = Yup.object().shape({
   email: Yup.string()
@@ -82,7 +73,7 @@ const Signup = () => {
   };
   const navigation = useNavigation<NavigationProp<{ Confirm: ISignupForm }>>();
   return (
-    <Container isForceKeyboardAvoiding={true}>
+    <Container isForceKeyboardAvoiding={true} style={{ backgroundColor: "white" }}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ backgroundColor: "white" }}
@@ -91,28 +82,16 @@ const Signup = () => {
           initialValues={SignupForm}
           validationSchema={validationSchema}
           onSubmit={async values => {
-            await signup(
-              values.email,
-              values.password,
-              values.confirmPassword,
-              values.nickname,
-              values.name,
-              values.phoneNumber,
-              values.studentNumber,
-              values.university,
-            )
-              .then(response => {
-                console.log(response);
-                if (response.success) {
-                  //라우터 넣으면 됨
-                  navigation.navigate("Confirm", values);
-                } else {
-                  console.log(response.errors);
-                  alert(response.errors);
-                }
+            UIStore.showLoadingOverlay();
+            await signup(values)
+              .then(() => {
+                return navigation.navigate("Confirm", values);
               })
               .catch(error => {
-                alert(`회원가입 실패 ${error} \n다시 시도해주세요.`);
+                alert(`회원가입 실패: ${error} \n다시 시도해주세요.`);
+              })
+              .finally(() => {
+                UIStore.hideLoadingOverlay();
               });
           }}
         >
@@ -160,7 +139,7 @@ const Signup = () => {
               <Spacer size={10} />
 
               <Field placeholder="학번" name="studentNumber" component={CustomInput} />
-              <Spacer size={10} />
+              <Spacer size={40} />
               <TextButton
                 backgroundColor="#000"
                 fontColor="white"
