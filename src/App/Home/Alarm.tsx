@@ -41,7 +41,7 @@ const boardData = [
     title: "I'm fine, thank you.",
     comment: "안녕하세요",
     userName: "dkanrjsk",
-    created: "3시간 전",
+    created: "2시간 전",
     add: "댓글",
     show: false,
   },

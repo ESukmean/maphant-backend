@@ -184,8 +184,6 @@ const Home: React.FC = () => {
             onChangeText={setText}
             returnKeyType="search"
             onEndEditing={() => console.log("Search Text Update Done")}
-            // onTouchStart={() => console.log("start")}
-            // onTouchEnd={() => console.log("end")}
             style={{
               flex: 1,
               //backgroundColor: "pink",
