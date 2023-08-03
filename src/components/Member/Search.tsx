@@ -1,6 +1,6 @@
 import { SearchBar } from "@rneui/themed";
 import React, { useEffect, useState } from "react";
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, ScrollView, StyleSheet, View } from "react-native";
 import { TAutocompleteDropdownItem } from "react-native-autocomplete-dropdown";
 
 import { searchList } from "../../types/SearchList";
