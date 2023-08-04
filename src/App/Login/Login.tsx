@@ -96,7 +96,7 @@ const Login: React.FC = () => {
               navigation.navigate("TermsSet" as never);
             }}
           >
-            Don't have any account? Sign up
+            Don&#039;t have any account? Sign up
           </TextButton>
         </View>
         <View>
