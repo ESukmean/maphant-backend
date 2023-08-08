@@ -37,9 +37,11 @@ const Login: React.FC = () => {
         if (message == "Not found") {
           Toast.show("존재하지 않는 이메일 입니다", { duration: Toast.durations.SHORT });
           return;
-        }
-        if (message == "Invalid password") {
+        } else if (message == "Invalid password") {
           Toast.show("비밀번호가 틀렸습니다", { duration: Toast.durations.SHORT });
+          return;
+        } else if (message == "탈퇴된 사용자입니다.") {
+          Toast.show("탈퇴된 사용자입니다.", { duration: Toast.durations.SHORT });
           return;
         }
       })
