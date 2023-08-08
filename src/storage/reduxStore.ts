@@ -1,14 +1,30 @@
 import { combineReducers, configureStore, createSlice } from "@reduxjs/toolkit";
 
+import { UserCategory, UserData } from "../types/User";
+
+type userStateType = {
+  token: string | null | undefined;
+  privKey: string | null | undefined;
+  profile: UserData | null | undefined;
+};
+
+const defaultUserState: userStateType = {
+  token: undefined,
+  privKey: undefined,
+  profile: undefined,
+};
 const userSlice = createSlice({
   name: "user",
-  initialState: {
-    token: null,
-    privKey: null,
-    profile: null,
-  },
+  initialState: defaultUserState,
   reducers: {
     setToken: (state, action) => {
+      if (action.payload === null)
+        return {
+          token: null,
+          privKey: null,
+          profile: state.profile,
+        };
+
       return {
         token: action.payload.token,
         privKey: action.payload.privKey,
@@ -31,7 +47,17 @@ const userSlice = createSlice({
     },
   },
 });
-const LoadingUIStore = createSlice({
+const defaultUserCategoryState: UserCategory | undefined = undefined;
+const userCategorySlice = createSlice({
+  name: "userCategory",
+  initialState: defaultUserCategoryState,
+  reducers: {
+    setUserCategory: (state, action) => {
+      return action.payload;
+    },
+  },
+});
+const LoadingUISlice = createSlice({
   name: "LoadingUI",
   initialState: 0,
   reducers: {
@@ -42,11 +68,11 @@ const LoadingUIStore = createSlice({
 
 const rootReducer = combineReducers({
   user: userSlice.reducer,
-  LoadingUI: LoadingUIStore.reducer,
+  LoadingUI: LoadingUISlice.reducer,
 });
 export type RootState = ReturnType<typeof rootReducer>;
 
 export default configureStore({
   reducer: rootReducer,
 });
-export { LoadingUIStore, userSlice };
+export { LoadingUISlice, userCategorySlice, userSlice };

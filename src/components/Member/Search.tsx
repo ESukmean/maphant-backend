@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, Touchable } from "react-native";
 import { SearchBar } from "@rneui/themed";
-import { universityList } from "../../Api/member/signUp";
-import {
-  AutocompleteDropdown,
-  TAutocompleteDropdownItem,
-} from "react-native-autocomplete-dropdown";
+import React, { useCallback, useEffect, useState } from "react";
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { TAutocompleteDropdownItem } from "react-native-autocomplete-dropdown";
 
-const Search = (props: any, { list }: { list: Promise<any> }) => {
+import { dataResponse } from "../../Api/fetchAPI";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Search = (props: any) => {
   const [search, setSearch] = useState("");
-  const [data, setData] = useState<String[]>([]);
+  const [data, setData] = useState<string[]>([]);
   const [filteredData, setFilteredData] = useState<TAutocompleteDropdownItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState<string>("");
-
   const handleItemClick = (itemTitle: string) => {
     setSearch(itemTitle);
     setFieldValue(name, itemTitle);
@@ -20,43 +17,71 @@ const Search = (props: any, { list }: { list: Promise<any> }) => {
 
   const {
     field: { name, onBlur, value },
-    form: { errors, touched, setFieldValue, setFieldTouched },
+    form: { setFieldValue, setFieldTouched },
+    list,
     ...inputProps
   } = props;
-  const hasError = errors[name] && touched[name];
 
   useEffect(() => {
-    props.list().then(res => {
-      setData(res.data);
-      // const formattedData = res.data.map((item: any, index: any) => ({
-      //   id: index.toString(),
-      //   title: item
-      // }));
-      // setFilteredData(formattedData);
-      return res.data;
+    props.list().then((res: dataResponse) => {
+      setData(res.data as string[]);
     });
-  }, [search, list]);
+  }, [list]);
 
-  const updateSearch = (text: string) => {
-    setSearch(text);
+  useEffect(() => {
+    setFieldValue(name, search);
+    updateSearch(search);
+  }, [search]);
 
-    // 검색어를 이용하여 데이터를 필터링
-    const filteredItems = data.filter(item => item.includes(text));
-    console.log(text);
-    console.log(filteredItems);
-    const formattedData = filteredItems.map((item, index) => ({
-      id: index.toString(),
-      title: item.toString()
-    }));
-    setFilteredData(formattedData);
-  };
+  const sliceResults = useCallback((items: TAutocompleteDropdownItem[]) => {
+    const slicedItems = [];
+    let i = 0;
+    const numColumns = 3;
+    while (i < items.length) {
+      slicedItems.push(items.slice(i, i + numColumns));
+      i += numColumns;
+    }
+    return slicedItems;
+  }, []);
+
+  const updateSearch = useCallback(
+    (text: string) => {
+      // 검색어를 이용하여 데이터를 필터링
+      const filteredItems = data.filter(item => item.includes(text));
+      const formattedData = filteredItems
+        .map((item, index) => ({
+          id: index.toString(),
+          title: item.toString(),
+        }))
+        .flat();
+      setFilteredData(formattedData);
+    },
+    [data],
+  );
+
+  const renderItemGroup = useCallback(
+    (itemGroup: TAutocompleteDropdownItem[]) => (
+      <View style={styles.itemContainer}>
+        {itemGroup.map(item => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.itemContainer}
+            onPress={() => (item && item.title ? handleItemClick(item.title) : null)}
+          >
+            <Text style={styles.itemText}>{item.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    ),
+    [],
+  );
 
   return (
-    <View>
+    <View style={styles.container}>
       <SearchBar
         onChangeText={text => {
-          updateSearch(text);
           setFieldValue(name, text);
+          setSearch(text);
         }}
         value={value}
         onBlur={() => {
@@ -67,20 +92,22 @@ const Search = (props: any, { list }: { list: Promise<any> }) => {
         inputContainerStyle={styles.searchBarInputContainer}
         {...inputProps}
       />
-      {hasError && <Text style={styles.errorText}>{errors[name]}</Text>}
-      {filteredData.map((item, index) =>
-        search === "" ? null : (
-          <TouchableOpacity
-            key={index}
-            style={styles.itemContainer}
-            onPress={() => (item && item.title ? handleItemClick(item.title) : null)}
-          >
-            <Text style={styles.itemText}>{item.title}</Text>
-          </TouchableOpacity>
-        ),
-      )}
 
-      <AutocompleteDropdown
+      <FlatList
+        keyboardShouldPersistTaps="handled"
+        data={sliceResults(filteredData)}
+        keyExtractor={(item, index) => index.toString()}
+        horizontal
+        pagingEnabled // 이 옵션을 추가하여 3개씩 스크롤되도록 설정합니다.
+        showsHorizontalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {renderItemGroup(item)}
+          </ScrollView>
+        )}
+      />
+
+      {/* <AutocompleteDropdown
         clearOnFocus={false}
         closeOnBlur={true}
         closeOnSubmit={false}
@@ -100,12 +127,15 @@ const Search = (props: any, { list }: { list: Promise<any> }) => {
           id: index.toString(),
           title: item.title || "",
         }))}
-      />
+      /> */}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   searchBarContainer: {
     backgroundColor: "transparent",
     borderBottomColor: "transparent",

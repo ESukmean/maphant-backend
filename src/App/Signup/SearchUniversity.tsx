@@ -1,21 +1,16 @@
-import React, { useState } from "react";
-import { SearchBar } from "@rneui/themed";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  KeyboardAvoidingView,
-  SafeAreaView,
-  ScrollView,
-  FlatList,
-} from "react-native";
-import { NavigationProp, useNavigation, useRoute } from "@react-navigation/native";
-import Search from "../../components/Member/Search";
-import { categorymajor, fieldList, majorList } from "../../Api/member/signUp";
-import { Field, Formik } from "formik";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { Field, Formik, FormikErrors } from "formik";
+import React, { useCallback, useMemo } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import Toast from "react-native-root-toast";
 import * as Yup from "yup";
+
+import { categorymajor, fieldList, majorList } from "../../Api/member/signUp";
+import { Container, TextButton } from "../../components/common";
+import Search from "../../components/Member/Search";
+import { NavigationProps } from "../../Navigator/Routes";
+import { SignUpFormParams } from "../../Navigator/SigninRoutes";
+import UIStore from "../../storage/UIStore";
 
 interface ISearchForm {
   field: string;
@@ -24,62 +19,92 @@ interface ISearchForm {
 
 const SearchUniversity: React.FC = () => {
   const route = useRoute();
-  const validationSchema = Yup.object().shape({
-    field: Yup.string().required("계열 입력해 주세요."),
-    major: Yup.string().required("전공 입력해 주세요."),
-  });
+  const params = route.params as SignUpFormParams;
 
+  const navigation = useNavigation<NavigationProps>();
+  const validationSchema = useMemo(
+    () =>
+      Yup.object().shape({
+        field: Yup.string().required("계열 입력해 주세요."),
+        major: Yup.string().required("전공 입력해 주세요."),
+      }),
+    [],
+  );
+
+  const onSubmit = useCallback((errors: FormikErrors<ISearchForm>, next: () => void) => {
+    if (Object.keys(errors).length === 0) {
+      next();
+    }
+
+    const msg = Object.values(errors)
+      .map(val => `${val}`)
+      .join("\n");
+    return Toast.show(msg);
+  }, []);
   const SearchForm: ISearchForm = {
     field: "",
     major: "",
   };
-  // const navigation = useNavigation<NavigationProp<{ Login: ISearchForm }>>();
 
   return (
-    <Formik
-      initialValues={SearchForm}
-      validationSchema={validationSchema}
-      onSubmit={async values => {
-        await categorymajor(route.params.email, values.field, values.major)
-          .then(response => {
-            if (response.success) {
-              // navigation.navigate("Login", values)
-            }
-          })
-          .catch(error => {
-            alert();
-          });
-      }}
-    >
-      {({ handleSubmit, isValid, values }) => (
-        <View style={styles.container}>
-          <View style={styles.FlistContainer}>
-            <Field
-              placeholder="계열 입력해 주세요."
-              name="field"
-              list={fieldList}
-              component={Search}
-            />
-          </View>
-          <View style={styles.MlistContainer}>
-            <Field
-              placeholder="전공 입력해 주세요."
-              name="major"
-              list={majorList}
-              component={Search}
-            />
-          </View>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              handleSubmit();
-            }}
-          >
-            <Text style={styles.finish}> Finish</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </Formik>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <ScrollView>
+        <Formik
+          initialValues={SearchForm}
+          validationSchema={validationSchema}
+          onSubmit={async values => {
+            UIStore.showLoadingOverlay();
+            await categorymajor(params.email, values.field, values.major)
+              .then(response => {
+                if (response.success) {
+                  alert("회원가입이 완료되었습니다.");
+                  navigation.navigate("Login");
+                }
+              })
+              .catch(error => {
+                alert(`학과 등록에 실패하였습니다.: ${error}`);
+              })
+              .finally(() => UIStore.hideLoadingOverlay());
+          }}
+        >
+          {({ handleSubmit, errors }) => (
+            <Container style={styles.container}>
+              <Container style={styles.FlistContainer}>
+                <Field
+                  placeholder="계열 입력해 주세요."
+                  name="field"
+                  list={fieldList}
+                  component={Search}
+                />
+              </Container>
+              <Container style={styles.MlistContainer}>
+                <Field
+                  placeholder="전공 입력해 주세요."
+                  name="major"
+                  list={majorList}
+                  component={Search}
+                />
+              </Container>
+              <TextButton
+                style={{
+                  backgroundColor: "#000",
+                  paddingVertical: 15,
+                  paddingHorizontal: 20,
+                  borderRadius: 30,
+                  marginTop: 40,
+                }}
+                fontColor={"white"}
+                onPress={() => {
+                  onSubmit(errors, handleSubmit);
+                }}
+              >
+                Finish
+              </TextButton>
+            </Container>
+          )}
+        </Formik>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -98,17 +123,6 @@ const styles = StyleSheet.create({
   MlistContainer: {
     flex: 1,
     marginTop: 20,
-  },
-  finish: {
-    color: "white",
-    textAlign: "center",
-  },
-  button: {
-    backgroundColor: "#000",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-    marginTop: 40,
   },
   searchBarContainer: {
     backgroundColor: "transparent",
