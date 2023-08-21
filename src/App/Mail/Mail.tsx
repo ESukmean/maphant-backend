@@ -61,7 +61,7 @@ const Mail: React.FC = () => {
       </View>
       <ScrollView>
         <View style={styles.sender}>
-          <View>
+          <View style={{ marginBottom: 10 }}>
             {chatList.map(mail => (
               // eslint-disable-next-line react/jsx-key
               <TouchableOpacity
@@ -82,9 +82,11 @@ const Mail: React.FC = () => {
                       {formatTimeDifference(new Date(mail.time))}
                     </Text>
                   </View>
-                  <Container style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={styles.content}>{mail.last_content}</Text>
-                    <TextButton style={{ justifyContent: "flex-end" }} onPress={() => del(mail.id)}>
+                  <Container style={{ maxHeight: 100 }}>
+                    <Text style={styles.content} numberOfLines={2}>
+                      {mail.last_content}
+                    </Text>
+                    <TextButton style={{ marginLeft: 320 }} onPress={() => del(mail.id)}>
                       삭제
                     </TextButton>
                   </Container>
@@ -144,7 +146,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   content: {
-    marginLeft: "7%",
+    marginLeft: "6%",
+    marginRight: "5.5%",
     paddingTop: "2%",
     fontSize: 18,
   },

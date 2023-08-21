@@ -1,6 +1,6 @@
 import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, Text } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Text } from "react-native";
 import { FlatList, TouchableOpacity } from "react-native-gesture-handler";
 
 import { chartLists, sendContent } from "../../Api/member/FindUser";
@@ -14,13 +14,21 @@ const Chatroom: React.FC = () => {
   const route = useRoute();
   const params = route.params as MailFormParams;
   const [receiveContent, setReceiveContent] = useState<ReceiveList[]>([]);
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState<string>("");
+  const [page, setPage] = useState<number>(0);
+  const [flag, setFlag] = useState<boolean>(false);
+  const handleEndReached = () => {
+    setFlag(true);
+    fetchChatLists(params.roomId);
+  };
   const fetchChatLists = async (roomId: number) => {
-    chartLists(roomId)
+    chartLists(roomId, page)
       .then(res => {
         if (res.success) {
-          setReceiveContent(res.data?.list);
-          console.log("fetchChatLists 받아옴");
+          const receive = res.data?.list;
+          setReceiveContent(receiveContent => [...receiveContent, ...receive]);
+          setPage(res.data?.nextCursor);
+          setFlag(false);
         }
       })
       .catch(e => console.error("fetchChatLists에러", e));
@@ -32,8 +40,6 @@ const Chatroom: React.FC = () => {
           if (params.roomId === 0) params.roomId = res.data?.room_id;
           fetchChatLists(params.roomId);
         }
-
-        console.log("send성공");
       })
       .catch(e => console.error("send에러", e));
     setContent("");
@@ -62,7 +68,10 @@ const Chatroom: React.FC = () => {
             <Container
               style={{
                 backgroundColor: "rgba(82, 153, 235, 0.3)",
-                paddingVertical: 13,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingVertical: 15,
+                paddingBottom: 15,
                 paddingHorizontal: 20,
                 borderRadius: 10,
                 flexShrink: 1,
@@ -85,7 +94,10 @@ const Chatroom: React.FC = () => {
             <Container
               style={{
                 backgroundColor: "#5299EB",
-                paddingVertical: 13,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingVertical: 15,
+                paddingBottom: 15,
                 paddingHorizontal: 20,
                 borderRadius: 10,
                 flexShrink: 1,
@@ -127,18 +139,20 @@ const Chatroom: React.FC = () => {
               navigation.navigate("Profile", { id: params.id } as never);
             }}
           >
-            {/* 여기수정 */}
-            <Text style={{ fontSize: 23, fontWeight: "bold", marginLeft: 5 }}>
+            <Text style={{ fontSize: 23, fontWeight: "bold", marginLeft: 20 }}>
               {params.nickname}
             </Text>
           </TouchableOpacity>
         </Container>
+        {flag ? <ActivityIndicator size="small" color="black" /> : <Text></Text>}
         <Container style={{ flex: 10 }}>
           <FlatList
             data={receiveContent}
             renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
             inverted={true}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.1}
           />
         </Container>
         <Container
