@@ -68,6 +68,20 @@ const validationSchema = Yup.object().shape({
   university: Yup.string().required("필수 정보입니다."),
 });
 
+function debounce(func: any, timeout = 300) {
+  let timer;
+  return (...args: any) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func.apply(this, args);
+    }, timeout);
+  };
+}
+function saveInput() {
+  console.log("Saving data to the server");
+}
+
+const processChange = debounce(() => saveInput());
 const Signup = () => {
   // const [loading, setLoading] = useState<Boolean>(false);
   const SignupForm: ISignupForm = {
@@ -122,7 +136,12 @@ const Signup = () => {
                 paddingHorizontal: 30,
               }}
             >
-              <Field placeholder="이메일" name="email" component={CustomInput} />
+              <Field
+                placeholder="이메일"
+                name="email"
+                component={CustomInput}
+                onkeyup={processChange}
+              />
               <Spacer size={10} />
 
               <Field
