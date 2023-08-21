@@ -111,6 +111,7 @@ const Signup = () => {
 
     // Toast.show("회원가입 정보를 확인해 주세요.");
   }, []);
+  const placeholderTextColor = "#636363";
 
   return (
     <Container isForceKeyboardAvoiding={true} style={{ backgroundColor: "white" }}>
@@ -150,6 +151,7 @@ const Signup = () => {
                 name="email"
                 component={CustomInput}
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
               />
               <Spacer size={10} />
 
@@ -159,6 +161,7 @@ const Signup = () => {
                 component={CustomInput}
                 secureTextEntry
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
               />
               <Spacer size={10} />
 
@@ -168,6 +171,7 @@ const Signup = () => {
                 component={CustomInput}
                 secureTextEntry
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
               />
               <Spacer size={10} />
 
@@ -176,6 +180,7 @@ const Signup = () => {
                 name="nickname"
                 component={CustomInput}
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
               />
               <Spacer size={10} />
 
@@ -184,6 +189,7 @@ const Signup = () => {
                 name="name"
                 component={CustomInput}
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
               />
               <Spacer size={10} />
 
@@ -193,6 +199,7 @@ const Signup = () => {
                 component={SearchByFilter}
                 list={universityList}
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
               />
 
               <Spacer size={10} />
@@ -202,6 +209,8 @@ const Signup = () => {
                 name="studentNumber"
                 component={CustomInput}
                 onKeyPress={processChange}
+                placeholderTextColor={placeholderTextColor}
+                ㄴ
               />
               <Spacer size={40} />
               <TextButton
