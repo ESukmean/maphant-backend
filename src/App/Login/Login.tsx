@@ -2,7 +2,6 @@ import { useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
-import Toast from "react-native-root-toast";
 
 import { sendFcm } from "../../Api/member/Fcm";
 import UserAPI from "../../Api/memberAPI";
@@ -108,10 +107,10 @@ const Login: React.FC = () => {
             backgroundColor="transparent"
             paddingVertical={16}
             onPress={() => {
-              navigation.navigate("find");
+              navigation.navigate("find" as never);
             }}
           >
-            ID / PW 찾기
+            PW 찾기
           </TextButton>
           <Spacer size={30} />
         </View>
