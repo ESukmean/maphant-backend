@@ -96,13 +96,16 @@ const Confirm: React.FC = () => {
         />
       </Container>
       <Container
-        style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-evenly",
+          marginBottom: 20,
+        }}
       >
         <TextButton
           activeOpacity={0.7}
           onPress={verifyCode}
-          fontSize={12}
-          fontColor={"#0055FF"}
+          fontSize={18}
           style={[
             styles.button,
             {
@@ -114,25 +117,24 @@ const Confirm: React.FC = () => {
         >
           확인
         </TextButton>
+        {showNextButton && (
+          <TextButton
+            activeOpacity={0.7}
+            onPress={checkCode}
+            fontSize={18}
+            style={[
+              styles.button,
+              {
+                backgroundColor: verificationCode === "" ? "#999" : "$0055FF",
+                borderColor: verificationCode === "" ? "#999" : "#0055FF",
+                width: 80,
+              },
+            ]}
+          >
+            다음
+          </TextButton>
+        )}
       </Container>
-
-      {showNextButton && (
-        <TextButton
-          activeOpacity={0.7}
-          onPress={checkCode}
-          fontSize={12}
-          fontColor={"#FFFFFF"}
-          style={[
-            styles.button,
-            {
-              backgroundColor: "5299EB",
-              marginTop: 20,
-            },
-          ]}
-        >
-          다음
-        </TextButton>
-      )}
     </Container>
   );
 };
