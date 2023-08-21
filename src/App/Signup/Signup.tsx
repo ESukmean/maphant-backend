@@ -3,7 +3,6 @@ import { Field, Formik, FormikErrors } from "formik";
 import React, { useCallback } from "react";
 // import { SearchBar } from "@rneui/themed";
 import { ScrollView } from "react-native";
-import Toast from "react-native-root-toast";
 import * as Yup from "yup";
 
 import {
@@ -68,20 +67,30 @@ const validationSchema = Yup.object().shape({
   university: Yup.string().required("필수 정보입니다."),
 });
 
-function debounce(func: any, timeout = 300) {
-  let timer;
-  return (...args: any) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      func.apply(this, args);
-    }, timeout);
-  };
+let debounce_lastTime = Date.now();
+let debounce_timer;
+
+function debounce(func: () => void, delay = 500) {
+  const now = Date.now();
+  debounce_timer && clearTimeout(debounce_timer);
+
+  if (now - debounce_lastTime < delay) {
+    debounce_timer = setTimeout(() => {
+      debounce(func, delay);
+    }, delay);
+
+    return;
+  }
+
+  debounce_lastTime = now;
+  func();
 }
+
 function saveInput() {
   console.log("Saving data to the server");
 }
 
-const processChange = debounce(() => saveInput());
+const processChange = () => debounce(() => saveInput());
 const Signup = () => {
   // const [loading, setLoading] = useState<Boolean>(false);
   const SignupForm: ISignupForm = {
@@ -140,7 +149,7 @@ const Signup = () => {
                 placeholder="이메일"
                 name="email"
                 component={CustomInput}
-                onkeyup={processChange}
+                onKeyPress={processChange}
               />
               <Spacer size={10} />
 
@@ -149,6 +158,7 @@ const Signup = () => {
                 name="password"
                 component={CustomInput}
                 secureTextEntry
+                onKeyPress={processChange}
               />
               <Spacer size={10} />
 
@@ -157,13 +167,24 @@ const Signup = () => {
                 name="confirmPassword"
                 component={CustomInput}
                 secureTextEntry
+                onKeyPress={processChange}
               />
               <Spacer size={10} />
 
-              <Field placeholder="닉네임" name="nickname" component={CustomInput} />
+              <Field
+                placeholder="닉네임"
+                name="nickname"
+                component={CustomInput}
+                onKeyPress={processChange}
+              />
               <Spacer size={10} />
 
-              <Field placeholder="이름" name="name" component={CustomInput} />
+              <Field
+                placeholder="이름"
+                name="name"
+                component={CustomInput}
+                onKeyPress={processChange}
+              />
               <Spacer size={10} />
 
               <Field
@@ -171,11 +192,17 @@ const Signup = () => {
                 name="university"
                 component={SearchByFilter}
                 list={universityList}
+                onKeyPress={processChange}
               />
 
               <Spacer size={10} />
 
-              <Field placeholder="학번" name="studentNumber" component={CustomInput} />
+              <Field
+                placeholder="학번"
+                name="studentNumber"
+                component={CustomInput}
+                onKeyPress={processChange}
+              />
               <Spacer size={40} />
               <TextButton
                 backgroundColor="#000"
