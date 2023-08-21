@@ -87,7 +87,7 @@ const Confirm: React.FC = () => {
       <Container style={{ marginBottom: 20 }}>
         <Text>인증 번호</Text>
         <Input
-          inputRef={verificationCodeInputRef}
+          // inputRef={verificationCodeInputRef}
           value={verificationCode}
           onChangeText={setVerificationCode}
           placeholder="인증번호 6자리를 입력해주세요."
