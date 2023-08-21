@@ -64,7 +64,7 @@ const TermsSet: React.FC = () => {
           checkAll(checkList.length != 4);
         }}
       >
-        <Container style={{ flexDirection: "row", marginBottom: 15 }}>
+        <Container style={{ flexDirection: "row", marginBottom: 10 }}>
           <CheckBox value={checkList.length === 4} onValueChange={checkAll}></CheckBox>
           <Text style={{ marginLeft: 10 }}>이용약관 전체동의</Text>
         </Container>
@@ -119,7 +119,9 @@ const TermsSet: React.FC = () => {
                 value={checkList.includes("community")}
                 onValueChange={isChecked => check("community", isChecked)}
               />
-              <Text style={{ marginLeft: 10 }}>[필수] 커뮤니티 이용수칙 확인</Text>
+              <Text style={{ marginLeft: 10, marginBottom: 25 }}>
+                [필수] 커뮤니티 이용수칙 확인
+              </Text>
             </Container>
           </TouchableOpacity>
 
@@ -147,7 +149,7 @@ const TermsSet: React.FC = () => {
         fontSize={14}
         disabled={!buttonColor}
         onPress={() => {
-          navigation.navigate("Signup");
+          navigation.navigate("Signup" as never);
         }}
       >
         다음
