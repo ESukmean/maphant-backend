@@ -68,7 +68,7 @@ const validationSchema = Yup.object().shape({
 });
 
 let debounce_lastTime = Date.now();
-let debounce_timer;
+let debounce_timer: string | number | NodeJS.Timeout | undefined;
 
 function debounce(func: () => void, delay = 500) {
   const now = Date.now();
