@@ -1,14 +1,52 @@
 import { combineReducers, configureStore, createSlice } from "@reduxjs/toolkit";
 
+import { UserCategory, UserData } from "../types/User";
+
+type userStateType = {
+  token: string | null | undefined;
+  privKey: string | null | undefined;
+  profile: UserData | null | undefined;
+};
+// type ChatState = {
+//   room: { id: number; chatlist: string[] }[];
+// };
+// const defaultChatState: ChatState = {
+//   room: [],
+// };
+const defaultUserState: userStateType = {
+  token: undefined,
+  privKey: undefined,
+  profile: undefined,
+};
+const ChatSlice = createSlice({
+  name: "roomname",
+  // @ts-ignore
+  initialState: {},
+  reducers: {
+    addChat: (state, action) => {
+      const { chatid, content }: { chatid: number; content: string } = action.payload;
+
+      const Chatroom = state[chatid];
+      if (Chatroom == undefined) {
+        state[chatid] = [];
+      }
+      state[chatid].push(content);
+      return state;
+    },
+  },
+});
 const userSlice = createSlice({
   name: "user",
-  initialState: {
-    token: null,
-    privKey: null,
-    profile: null,
-  },
+  initialState: defaultUserState,
   reducers: {
     setToken: (state, action) => {
+      if (action.payload === null)
+        return {
+          token: null,
+          privKey: null,
+          profile: state.profile,
+        };
+
       return {
         token: action.payload.token,
         privKey: action.payload.privKey,
@@ -31,7 +69,17 @@ const userSlice = createSlice({
     },
   },
 });
-const LoadingUIStore = createSlice({
+
+const userCategorySlice = createSlice({
+  name: "userCategory",
+  initialState: null as UserCategory | null,
+  reducers: {
+    setUserCategory: (state, action) => {
+      return action.payload as UserCategory;
+    },
+  },
+});
+const LoadingUISlice = createSlice({
   name: "LoadingUI",
   initialState: 0,
   reducers: {
@@ -42,11 +90,13 @@ const LoadingUIStore = createSlice({
 
 const rootReducer = combineReducers({
   user: userSlice.reducer,
-  LoadingUI: LoadingUIStore.reducer,
+  LoadingUI: LoadingUISlice.reducer,
+  userCategory: userCategorySlice.reducer,
+  ChatSlice: ChatSlice.reducer,
 });
 export type RootState = ReturnType<typeof rootReducer>;
 
 export default configureStore({
   reducer: rootReducer,
 });
-export { LoadingUIStore, userSlice };
+export { ChatSlice, LoadingUISlice, userCategorySlice, userSlice };

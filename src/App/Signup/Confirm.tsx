@@ -1,33 +1,30 @@
 import { NavigationProp, useNavigation, useRoute } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from "react";
-import { Alert, StyleSheet, Text, TextInput } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text } from "react-native";
 
 import { confirmEmail } from "../../Api/member/signUp";
 import { Container, Input, TextButton } from "../../components/common";
-interface ISignupForm {
-  email: string;
-}
+import { SignUpFormParams } from "../../Navigator/SigninRoutes";
+
 const Confirm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [minutes, setMinutes] = useState(10);
   const [seconds, setSeconds] = useState(0);
   const [verificationCode, setVerificationCode] = useState("");
-  const verificationCodeInputRef = useRef<TextInput>(null);
+  // const verificationCodeInputRef = useRef<TextInput>(null);
   const [showNextButton, setShowNextButton] = useState(false);
   const route = useRoute();
-  // const navigation = useNavigation()
-  const navigation = useNavigation<NavigationProp<{ SearchUniversity: ISignupForm }>>();
+  const params = route.params as SignUpFormParams;
+
+  const navigation = useNavigation<NavigationProp<{ SearchUniversity: SignUpFormParams }>>();
 
   useEffect(() => {
-    console.log(route.params);
-    setEmail(route.params.email);
-  }, []);
+    if (params && params.email) setEmail(params.email);
+  }, [route]);
 
-  const checkCode = async (values: ISignupForm) => {
-    values.email = email;
-    console.log("다음버튼 클릭");
+  const checkCode = () => {
     if (showNextButton) {
-      navigation.navigate("SearchUniversity", values);
+      navigation.navigate("SearchUniversity", params);
     }
   };
   const verifyCode = () => {
@@ -88,7 +85,7 @@ const Confirm: React.FC = () => {
       <Container style={{ marginBottom: 20 }}>
         <Text>인증 번호</Text>
         <Input
-          ref={verificationCodeInputRef}
+          // ref={verificationCodeInputRef}
           value={verificationCode}
           onChangeText={setVerificationCode}
           placeholder="인증번호 6자리를 입력해주세요."
@@ -143,7 +140,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 4,
     width: 300,
-    height: 30,
+    height: 40,
     padding: 8,
     borderColor: "#999",
     marginLeft: 10,

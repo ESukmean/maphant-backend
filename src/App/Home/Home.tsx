@@ -1,22 +1,35 @@
-import { Theme, useNavigation, useTheme } from "@react-navigation/native";
-import { StatusBar } from "expo-status-bar";
-import React, { useContext,useEffect, useState } from "react";
+import { Feather, FontAwesome } from "@expo/vector-icons";
+import { BottomSheetFlatList, BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Dimensions,
+  ActivityIndicator,
   Image,
   ImageSourcePropType,
-  SafeAreaView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   TextInput,
+  TextStyle,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { useSelector } from "react-redux";
 
+import { GetAPI } from "../../Api/fetchAPI";
+import { Container, ImageBox, Spacer, TextThemed } from "../../components/common";
+import { NavigationProps } from "../../Navigator/Routes";
+import UserStorage from "../../storage/UserStorage";
+import { BoardArticle } from "../../types/Board";
+import { UserCategory } from "../../types/User";
 import { ThemeContext } from "../Style/ThemeContext";
+
 interface Tags {
   id: string | undefined;
   title: string | undefined;
@@ -24,76 +37,315 @@ interface Tags {
 // type homeScreenProps = NativeStackScreenProps
 
 const Home: React.FC = () => {
-  const { width, height } = useWindowDimensions();
-  const [SCREEN_WIDTH, setSCREEN_WIDTH] = useState(width);
-  const [SCREEN_HEIGHT, setSCREEN_HEIGHT] = useState(height);
-  const [isDark, setIsDark] = useContext(ThemeContext);
-  const theme = useTheme();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const changeMode = () => {
-    setIsDark(!isDark);
-  };
-
-  // console.log("width : " + width);
-
-  useEffect(() => {
-    setSCREEN_WIDTH(width);
-    setSCREEN_HEIGHT(height);
-
-    setStyleSheet(createStyle(width, height, theme));
-  }, [width, height, isDark]);
-
-  // * Search
-  const [text, setText] = useState<string>();
-  const [styles, setStyleSheet] = useState<any>(createStyle(SCREEN_WIDTH, SCREEN_HEIGHT, theme));
-
-  const clearTextHandler = () => {
-    console.log("Search Text Delete Done");
-    setText("");
-  };
-  // Search *
-
-  // * Info
-  const [currentinfoPage, setCurrentinfoPage] = useState(0);
-  const infoPageCount = 3; // 페이지 수
-
-  const [info, setInfo] = useState<ImageSourcePropType[]>([
-    require("../../../assets/image1.png"),
-    require("../../../assets/image2.png"),
-    require("../../../assets/image3.png"),
+  const [text, setText] = useState<string>("");
+  const [info, setInfo] = useState<[ImageSourcePropType, () => void][]>([
+    [
+      require("../../../assets/image1.jpg"),
+      () => {
+        alert("1");
+      },
+    ],
+    [
+      require("../../../assets/image2.jpg"),
+      () => {
+        alert("2");
+      },
+    ],
+    [
+      require("../../../assets/image3.jpg"),
+      () => {
+        alert("3");
+      },
+    ],
   ]); // 들어갈 컨텐츠
 
-  const handleScroll = (event: any) => {
+  return (
+    //view화면
+    <Container isForceTopSafeArea={true} paddingHorizontal={0}>
+      <ScrollView>
+        <MainHeader />
+        <SearchBar text={text} onTextChanged={setText} />
+        <Carousel imageList={info} />
+        <Spacer size={20} />
+        <TodaysHot />
+        <Spacer size={40} />
+        <HotPost />
+
+        <Spacer size={20} />
+      </ScrollView>
+    </Container>
+  );
+};
+
+const MainHeader: React.FC = () => {
+  const navigation = useNavigation<NavigationProps>();
+  const styles = StyleSheet.create({
+    titleContainer: {
+      height: 60,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingLeft: "3%",
+      paddingRight: "3%",
+    },
+    iconContainer: {
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+    },
+  });
+
+  const [isDark, setIsDark] = useContext(ThemeContext);
+
+  const changeMode = useCallback(() => {
+    setIsDark(!isDark);
+  }, [isDark]);
+
+  return (
+    <View style={styles.titleContainer}>
+      <HeaderCategory />
+      <View style={styles.iconContainer}>
+        <TouchableOpacity
+          style={{
+            justifyContent: "center",
+          }}
+          onPress={changeMode}
+        >
+          <Icon
+            name="moon-outline"
+            size={30}
+            color="#666666"
+            style={{
+              marginRight: "5%",
+            }}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            justifyContent: "center",
+          }}
+        >
+          <Icon
+            name="notifications-outline"
+            size={30}
+            color="#666666"
+            style={{
+              marginRight: "5%",
+            }}
+            onPress={() => {
+              navigation.navigate("alarm", 10);
+            }}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const HeaderCategory: React.FC = () => {
+  const currentCategory = useSelector(UserStorage.userCategorySelector);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const [userCategoryList, setUserCategoryList] = useState<UserCategory[]>([]);
+  const profile = useSelector(UserStorage.userProfileSelector);
+
+  const styles = StyleSheet.create({
+    titleText: {
+      fontSize: 35,
+      marginLeft: "4%",
+      fontWeight: "bold",
+    },
+  });
+
+  useEffect(() => {
+    UserStorage.listUserCategory().then(list => setUserCategoryList(list));
+  }, [profile]);
+
+  const snapPoints = useMemo(() => ["25%", "60%"], []);
+  const onCategoryPress = useCallback((item: UserCategory) => {
+    UserStorage.setUserCategoryCurrent(item);
+    bottomSheetRef.current?.dismiss();
+  }, []);
+
+  const renderItem = useCallback(({ item }: { item: UserCategory }) => {
+    const style_text: StyleProp<TextStyle> = {
+      fontSize: 16,
+      fontWeight: Object.is(item, currentCategory) ? "bold" : "normal",
+    };
+
+    return (
+      <TouchableOpacity onPress={() => onCategoryPress(item)}>
+        <Text style={style_text}>
+          {item.majorName} ({item.categoryName})
+        </Text>
+      </TouchableOpacity>
+    );
+  }, []);
+
+  useEffect(() => {
+    bottomSheetRef.current?.snapToIndex(1);
+  }, []);
+
+  // render
+
+  return (
+    <Pressable
+      onPress={() => {
+        bottomSheetRef.current?.present();
+      }}
+    >
+      <TextThemed style={styles.titleText}>
+        {currentCategory?.majorName ?? "학과정보 없음"}
+      </TextThemed>
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        style={{ paddingHorizontal: 16 }}
+      >
+        <Text style={{ fontSize: 20, fontWeight: "bold" }}>계열·학과를 선택해 주세요</Text>
+        <Spacer size={20} />
+        <BottomSheetFlatList
+          data={userCategoryList}
+          keyExtractor={(_, idx) => idx.toString()}
+          renderItem={renderItem}
+        />
+      </BottomSheetModal>
+    </Pressable>
+  );
+};
+
+const SearchBar: React.FC<{ text: string; onTextChanged: (text: string) => void }> = props => {
+  const { text, onTextChanged } = props;
+
+  const styles = StyleSheet.create({
+    searchContainer: {
+      height: 60,
+      flexDirection: "row",
+      justifyContent: "center",
+    },
+    searchBox: {
+      flex: 1,
+      flexDirection: "row",
+      marginTop: "2.5%",
+      marginBottom: "2.5%",
+      marginLeft: "5%",
+      marginRight: "5%",
+      paddingLeft: "3%",
+      paddingRight: "3%",
+      backgroundColor: "#D8E1EC",
+      borderRadius: 30,
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+  });
+
+  return (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBox}>
+        <View>
+          <Icon name="search" size={25} color="#666666" style={{}} />
+        </View>
+        <TextInput
+          value={text}
+          onChangeText={onTextChanged}
+          returnKeyType="search"
+          onEndEditing={() => console.log("Search Text Update Done")}
+          style={{
+            flex: 1,
+            height: "100%",
+            marginLeft: "3%",
+            marginRight: "3%",
+          }}
+        />
+        <TouchableOpacity onPress={() => onTextChanged("")}>
+          <Icon name="close" size={25} color="#666666" style={{}} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const Carousel: React.FC<{ imageList: [ImageSourcePropType, () => void][] }> = props => {
+  const { imageList } = props;
+  const [currentinfoPage, setCurrentinfoPage] = useState(0);
+  const infoPageCount = 3; // 페이지
+
+  const SCREEN_WIDTH = useWindowDimensions().width;
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const infoPage = Math.round((offsetX / SCREEN_WIDTH) * 0.9);
+    const infoPage = Math.round(offsetX / SCREEN_WIDTH);
     setCurrentinfoPage(infoPage);
   };
 
-  const createInfoView = (info: ImageSourcePropType[], index: number) => {
-    return info.map((image: ImageSourcePropType, index: number) => (
-      <View
-        key={index}
-        style={{
-          width: SCREEN_WIDTH * 0.9,
-          height: "100%",
-        }}
-      >
-        <Image
-          source={image as ImageSourcePropType}
-          style={{ width: "100%", height: "100%", resizeMode: "stretch" }}
-        />
-      </View>
-    ));
+  const CreateInfoView: React.FC<{
+    imageList: [ImageSourcePropType, () => void][];
+    currentPage: number;
+  }> = props => {
+    const { imageList, _currentPage } = props;
+    return (
+      <>
+        {imageList.map(([image, action], idx) => (
+          <Pressable key={idx} onPress={action} style={{ paddingHorizontal: 16, height: 250 }}>
+            <ImageBox source={image} width={SCREEN_WIDTH - 16 * 2} height={250} borderRadius={8} />
+          </Pressable>
+        ))}
+      </>
+    );
   };
 
-  // function mapInfo() {
-  //   return info.map((info, index) => createInfoView(info, index));
-  // }
+  const styles = StyleSheet.create({
+    infoDotBox: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: 10,
+    },
+    infoDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: "gray",
+      marginHorizontal: 5,
+    },
+    activeinfoDot: {
+      backgroundColor: "#5299EB",
+    },
+    unactiveinfoDot: {
+      backgroundColor: "#CBD7E6",
+    },
+  });
 
-  // Info *
+  return (
+    <View>
+      <ScrollView
+        horizontal={true}
+        pagingEnabled={true}
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={{ borderRadius: 18 }}
+      >
+        <CreateInfoView imageList={imageList} currentPage={currentinfoPage} />
+      </ScrollView>
+
+      <View style={styles.infoDotBox}>
+        {Array.from({ length: infoPageCount }, (_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.infoDot,
+              index === currentinfoPage ? styles.activeinfoDot : styles.unactiveinfoDot,
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const TodaysHot: React.FC = () => {
   // * HotTags
   const [tags, setTags] = useState<Tags[]>([
-    //useState를 이용해 상태 변경
     { id: "1", title: "#오정민" }, //초기값 설정
     { id: "2", title: "#앗뜨거 앗뜨" },
     { id: "3", title: "#부트캠프" },
@@ -103,28 +355,6 @@ const Home: React.FC = () => {
     { id: "7", title: "과끼리" },
     { id: "8", title: "Tovelop" },
   ]);
-
-  useEffect(() => {
-    // 백엔드에서 데이터를 받아 상태 변경 tagFetchData();
-  }, []);
-
-  /*const tagFetchData = async () => {
-    try {
-      // 백엔드에서 데이터를 받아오는 비동기 요청
-      const response = await fetch('API');
-      const data = await response.json();
-
-      // 받아온 데이터를 기반으로 배열 생성 후 상태 변경
-      const tagList: Tags[] = data.map((tag: any) => ({
-        id: tags.id,
-        title: tags.title,
-      }));
-
-      setTags(tagList);
-    } catch (error) {
-      console.error('Fetching data error :', error);
-    }
-  };*/
 
   const createTagView = (tag: Tags, index: number) => {
     const colors = [
@@ -146,13 +376,14 @@ const Home: React.FC = () => {
           backgroundColor: colors[index % colors.length],
           justifyContent: "flex-start",
           alignItems: "center",
-          marginRight: Dimensions.get("window").width * 0.02,
-          padding: Dimensions.get("window").width * 0.025,
+          marginLeft: 4,
+          paddingVertical: 8,
+          paddingHorizontal: 12,
           height: 36,
           borderRadius: 30,
         }}
       >
-        <Text style={{}}>{tag.title}</Text>
+        <Text>{tag.title}</Text>
       </View>
     );
   };
@@ -160,263 +391,10 @@ const Home: React.FC = () => {
   function mapTag() {
     return tags.map((tag, index) => createTagView(tag, index));
   }
-  const navigation = useNavigation();
-  // HotTags *
 
-  return (
-    //view화면
-
-    <SafeAreaView style={styles.mainContainer}>
-      <StatusBar style="auto" />
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>software</Text>
-        <View style={styles.iconContainer}>
-          <TouchableOpacity
-            style={{
-              justifyContent: "center",
-            }}
-            onPress={changeMode}
-          >
-            <Icon
-              name="moon-outline"
-              size={30}
-              color="#666666"
-              style={{
-                marginRight: "5%",
-              }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              justifyContent: "center",
-            }}
-          >
-            <Icon
-              name="notifications-outline"
-              size={30}
-              color="#666666"
-              style={{
-                marginRight: "5%",
-              }}
-              onPress={() => {
-                navigation.navigate("alarm" as never);
-              }}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBox}>
-          <View>
-            <Icon name="search" size={25} color="#666666" style={{}} />
-          </View>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            returnKeyType="search"
-            onEndEditing={() => console.log("Search Text Update Done")}
-            // onTouchStart={() => console.log("start")}
-            // onTouchEnd={() => console.log("end")}
-            style={{
-              flex: 1,
-              //backgroundColor: "pink",
-              height: "100%",
-              marginLeft: "3%",
-              marginRight: "3%",
-            }}
-          />
-          <TouchableOpacity onPress={clearTextHandler}>
-            <Icon name="close" size={25} color="#666666" style={{}} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView style={{ height: Dimensions.get("window").height }}>
-        <View style={styles.infoContainer}>
-          <ScrollView
-            horizontal={true}
-            pagingEnabled={true}
-            showsHorizontalScrollIndicator={false}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            style={{ borderRadius: 18 }}
-          >
-            {/* <View style={[styles.infoPage, { backgroundColor: "red" }]}>
-              
-            </View>
-            <View style={[styles.infoPage, { backgroundColor: "blue" }]}>
-            
-            </View>
-            <View style={[styles.infoPage, { backgroundColor: "green" }]}>
-              
-            </View> */}
-            {createInfoView(info, currentinfoPage)}
-          </ScrollView>
-
-          <View style={styles.infoDotBox}>
-            {Array.from({ length: infoPageCount }, (_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.infoDot,
-                  index === currentinfoPage ? styles.activeinfoDot : styles.unactiveinfoDot,
-                ]}
-              />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.todaysHotContainer}>
-          <View style={styles.todaysHotTitleBox}>
-            <Text style={styles.todaysHotTitleText}> 🔥오늘의</Text>
-            <Text
-              style={{
-                fontSize: 25,
-                fontWeight: "bold",
-                color: "red",
-              }}
-            >
-              {" "}
-              HOT
-            </Text>
-            <Text style={styles.todaysHotTitleText}> 키워드🔥</Text>
-
-            <View
-              style={{
-                width: "13%",
-                height: "80%",
-                marginLeft: "-3%",
-                marginBottom: "2%",
-                //backgroundColor: "gray",
-              }}
-            ></View>
-          </View>
-
-          <ScrollView
-            horizontal={true}
-            keyboardDismissMode="none"
-            showsHorizontalScrollIndicator={false}
-            style={styles.todaysHotTagBox}
-          >
-            {mapTag()}
-          </ScrollView>
-        </View>
-
-        <View style={styles.advertisementContainer}>
-          <Image
-            source={require("../../../assets/adv1.png")}
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-          />
-        </View>
-
-        <View style={styles.homeBlockLayout}>
-          <View style={styles.homeBlockContainer}>
-            <TouchableOpacity style={styles.homeBlock}>
-              <Text>즐겨찾기</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.homeBlock}>
-              <Text>Blog</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.homeBlock}>
-              <Text>Point</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.homeBlock}>
-              <Text>아몰랑</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
-const createStyle = (width: number, height: number, theme: Theme) =>
-  StyleSheet.create({
-    mainContainer: {
-      width: width,
-      height: height,
-    },
-    mainScroll: {
-      height: "100%",
-    },
-    titleContainer: {
-      height: height * 0.06,
-      flexDirection: "row",
-      // backgroundColor: "blue",
-      alignItems: "center",
-      paddingLeft: "3%",
-      paddingRight: "3%",
-    },
-    titleText: {
-      color: theme.colors.text,
-      fontSize: 35,
-      marginLeft: "4%",
-      fontWeight: "bold",
-    },
-    iconContainer: {
-      flex: 1,
-      flexDirection: "row",
-      // backgroundColor: "skyblue",
-      justifyContent: "flex-end",
-    },
-    searchContainer: {
-      height: height * 0.07,
-      flexDirection: "row",
-      //backgroundColor: "teal",
-      justifyContent: "center",
-    },
-    searchBox: {
-      flex: 1,
-      flexDirection: "row",
-      marginTop: "2.5%",
-      marginBottom: "2.5%",
-      marginLeft: "5%",
-      marginRight: "5%",
-      paddingLeft: "3%",
-      paddingRight: "3%",
-      backgroundColor: "#D8E1EC",
-      borderRadius: 30,
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    infoContainer: {
-      height: Dimensions.get("window").height * 0.28,
-      //backgroundColor: "yellow",
-      paddingTop: "3%",
-      paddingLeft: "5%",
-      paddingRight: "5%",
-      // backgroundColor: "red",
-    },
-
-    infoDotBox: {
-      flexDirection: "row",
-      justifyContent: "center",
-      marginTop: 10,
-    },
-    infoDot: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: "gray",
-      marginHorizontal: 5,
-    },
-    activeinfoDot: {
-      backgroundColor: "#5299EB",
-    },
-    unactiveinfoDot: {
-      backgroundColor: "#CBD7E6",
-    },
-    todaysHotContainer: {
-      height: Dimensions.get("window").height * 0.13,
-      //backgroundColor: "green",
-      paddingLeft: "5%",
-      paddingRight: "5%",
-    },
+  const styles = StyleSheet.create({
     todaysHotTitleBox: {
+      padding: 16,
       flex: 1,
       flexDirection: "row",
       //backgroundColor: "skyblue",
@@ -424,7 +402,6 @@ const createStyle = (width: number, height: number, theme: Theme) =>
     },
 
     todaysHotTitleText: {
-      color: theme.colors.text,
       fontSize: 25,
       fontWeight: "bold",
     },
@@ -433,36 +410,262 @@ const createStyle = (width: number, height: number, theme: Theme) =>
       flexDirection: "row",
       //backgroundColor: "purple",
     },
-    advertisementContainer: {
-      height: Dimensions.get("window").height * 0.25,
-      backgroundColor: "pink",
+  });
+
+  return (
+    <View>
+      <View style={styles.todaysHotTitleBox}>
+        <TextThemed style={styles.todaysHotTitleText}> 🔥오늘의</TextThemed>
+        <Text
+          style={{
+            fontSize: 25,
+            fontWeight: "bold",
+            color: "red",
+          }}
+        >
+          {" "}
+          HOT
+        </Text>
+        <TextThemed style={styles.todaysHotTitleText}> 키워드🔥</TextThemed>
+      </View>
+
+      <ScrollView
+        horizontal={true}
+        keyboardDismissMode="none"
+        showsHorizontalScrollIndicator={false}
+        style={styles.todaysHotTagBox}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+      >
+        {mapTag()}
+      </ScrollView>
+    </View>
+  );
+};
+
+const HotPost: React.FC = () => {
+  const [hotPost, setHotPost] = useState<BoardArticle[]>([]);
+
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    GetAPI("/board/hot?&page=1&recordSize=2").then(res => {
+      console.log(res);
+      if (res.success === false) {
+        console.log(res.errors);
+      } else {
+        setHotPost(res.data.list);
+      }
+    });
+  }, []);
+
+  const detailContent = (boardId: number) => {
+    navigation.navigate("BoardDetail", { id: boardId });
+  };
+
+  const styles = StyleSheet.create({
+    hotPostBox: {
+      height: 340,
+      borderWidth: 1,
+      borderColor: "#d1d1d1",
+      borderRadius: 10,
+      marginLeft: 10,
+      marginRight: 10,
     },
-    homeBlockLayout: {
-      width: "100%",
-      // height: homeBlockLayoutHeight,
-      //backgroundColor: "blue",
-      alignItems: "center",
+    boxTitleBox: {
+      height: 50,
       justifyContent: "center",
     },
-    homeBlockContainer: {
-      width: "90%",
-      height: "100%",
-      //backgroundColor: "yellow",
+    boxTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginLeft: 20,
+    },
+    line: {
+      borderWidth: 0.7,
+      borderColor: "#d1d1d1",
+      marginLeft: 20,
+      marginRight: 20,
+    },
+    postBox: {
+      height: 143,
+      marginLeft: 20,
+      marginRight: 20,
+      // backgroundColor: "skyblue",
+    },
+    nameAndtypeBox: {
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-around",
-
+      paddingLeft: 10,
+      paddingRight: 10,
+    },
+    profileImage: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      marginRight: 10,
+      borderWidth: 1,
+    },
+    textContainer: {
       flexDirection: "row",
     },
-    homeBlock: {
-      width: "23%",
-      height: "50%",
-      backgroundColor: "skyblue",
+
+    userNickname: {
+      fontSize: 15,
+      fontWeight: "bold",
+      // backgroundColor: "pink",
+    },
+    boardType: {
+      fontSize: 15,
+      color: "gray",
+      marginLeft: "60%",
+    },
+    titleAndbodyBox: {
+      height: 60,
+      // backgroundColor: "skyblue",
+    },
+    postTitle: {
+      fontSize: 15,
+      fontWeight: "bold",
+    },
+    postBody: {
+      fontSize: 15,
+      marginLeft: 5,
+      // backgroundColor: "pink",
+    },
+    timeAndlikeAndcomment: {
+      flexDirection: "row",
+      // backgroundColor: "pink",
       alignItems: "center",
-      borderColor: "black",
-      justifyContent: "center",
-      borderRadius: 15,
-      marginRight: "2%",
+      height: 25,
+    },
+    likeTextWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginRight: 10,
+    },
+    commentTextWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    iconText: {
+      marginLeft: 4,
+    },
+    timeTextWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginLeft: "60%",
     },
   });
+
+  if (hotPost.length === 0) {
+    return <View />;
+  }
+  return (
+    <View style={styles.hotPostBox}>
+      <View style={styles.boxTitleBox}>
+        <Text style={styles.boxTitle}>Hot 게시글</Text>
+      </View>
+
+      <View style={styles.line}></View>
+
+      <Pressable style={styles.postBox} onPress={() => detailContent(hotPost[0].boardId)}>
+        <Spacer size={10} />
+
+        <View style={styles.nameAndtypeBox}>
+          <Image
+            source={{ uri: "https://tovelope.s3.ap-northeast-2.amazonaws.com/image_1.jpg" }}
+            style={styles.profileImage}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.userNickname}>{hotPost[0].userNickname}</Text>
+            <Text style={styles.boardType}>{hotPost[0].type}</Text>
+          </View>
+        </View>
+
+        <Spacer size={5} />
+        <View style={styles.titleAndbodyBox}>
+          <Text style={styles.postTitle}>{hotPost[0].title}</Text>
+          <Spacer size={2} />
+          <Text style={styles.postBody}>{hotPost[0].body}</Text>
+        </View>
+
+        <Spacer size={5} />
+        <View style={styles.timeAndlikeAndcomment}>
+          <View style={styles.likeTextWrapper}>
+            <Feather name="thumbs-up" size={13} color="tomato" />
+            <Text style={styles.iconText}>{hotPost[0].likeCnt}</Text>
+          </View>
+          <View style={styles.commentTextWrapper}>
+            <FontAwesome name="comment-o" size={13} color="blue" />
+            <Text style={styles.iconText}>{hotPost[0].commentCnt}</Text>
+          </View>
+          <View style={styles.timeTextWrapper}>
+            <Text>{dateToString(hotPost[0].createdAt)}</Text>
+          </View>
+        </View>
+      </Pressable>
+
+      <View style={styles.line}></View>
+
+      <Pressable style={styles.postBox} onPress={() => detailContent(hotPost[1].boardId)}>
+        <Spacer size={10} />
+        <View style={styles.nameAndtypeBox}>
+          <Image
+            source={{ uri: "https://tovelope.s3.ap-northeast-2.amazonaws.com/image_1.jpg" }}
+            style={styles.profileImage}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.userNickname}>{hotPost[1].userNickname}</Text>
+            <Text style={styles.boardType}>{hotPost[1].type}</Text>
+          </View>
+        </View>
+
+        <Spacer size={5} />
+        <View style={styles.titleAndbodyBox}>
+          <Text style={styles.postTitle}>{hotPost[1].title}</Text>
+          <Spacer size={2} />
+          <Text style={styles.postBody}>{hotPost[1].body}</Text>
+        </View>
+
+        <Spacer size={5} />
+        <View style={styles.timeAndlikeAndcomment}>
+          <View style={styles.likeTextWrapper}>
+            <Feather name="thumbs-up" size={13} color="tomato" />
+            <Text style={styles.iconText}>{hotPost[1].likeCnt}</Text>
+          </View>
+          <View style={styles.commentTextWrapper}>
+            <FontAwesome name="comment-o" size={13} color="blue" />
+            <Text style={styles.iconText}>{hotPost[1].commentCnt}</Text>
+          </View>
+          <View style={styles.timeTextWrapper}>
+            <Text>{dateToString(hotPost[1].createdAt)}</Text>
+          </View>
+        </View>
+      </Pressable>
+    </View>
+  );
+};
+function dateToString(date: string): string {
+  const start = new Date(date);
+  const end = new Date();
+
+  const diff = end.getTime() - start.getTime();
+  const diffDate = new Date(diff);
+
+  const year = diffDate.getFullYear() - 1970;
+  const month = diffDate.getMonth();
+  const day = diffDate.getDate() - 1;
+  const hour = diffDate.getHours();
+  const minute = diffDate.getMinutes();
+  const second = diffDate.getSeconds();
+
+  if (year > 0) return `${year}년 전`;
+  if (month > 0) return `${month}달 전`;
+  if (day > 0) return `${day}일 전`;
+  if (hour > 0) return `${hour}시간 전`;
+  if (minute > 0) return `${minute}분 전`;
+  if (second > 0) return `${second}초 전`;
+  return "방금 전";
+}
 
 export default Home;
