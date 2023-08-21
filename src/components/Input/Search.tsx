@@ -1,83 +1,65 @@
 import { SearchBar } from "@rneui/themed";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TAutocompleteDropdownItem } from "react-native-autocomplete-dropdown";
 
-import { searchList } from "../../types/SearchList";
-
-const Search = (props, { list }: { list: Promise<searchList[]> }) => {
+type Props = {
+  field: unknown;
+  form: unknown;
+  list: TAutocompleteDropdownItem[];
+  onChangeText: (text: string) => void;
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Search: React.FC<Props> = props => {
   const [search, setSearch] = useState("");
-  const [data, setData] = useState<string[]>([]);
-  const [filteredData, setFilteredData] = useState<TAutocompleteDropdownItem[]>([]);
   const handleItemClick = (itemTitle: string) => {
     setSearch(itemTitle);
     setFieldValue(name, itemTitle);
   };
 
   const {
+    // @ts-ignore
     field: { name, onBlur, value },
+    // @ts-ignore
     form: { setFieldValue, setFieldTouched },
+    list,
+    onChangeText,
     ...inputProps
   } = props;
 
-  useEffect(() => {
-    props.list().then((res: any) => {
-      setData(res.data);
-      // const formattedData = res.data.map((item: any, index: any) => ({
-      //   id: index.toString(),
-      //   title: item
-      // }));
-      // setFilteredData(formattedData);
-      return res.data;
-    });
-  }, [search, list]);
-  const sliceResults = (items: TAutocompleteDropdownItem[]) => {
-    const slicedItems = [];
-    let i = 0;
-    const numColumns = 3;
-    while (i < items.length) {
-      slicedItems.push(items.slice(i, i + numColumns));
-      i += numColumns;
-    }
-    return slicedItems;
-  };
-
-  const updateSearch = (text: string) => {
+  const onChangeTextInterceptor = (text: string) => {
     setSearch(text);
+    setFieldValue(name, text);
 
-    // 검색어를 이용하여 데이터를 필터링
-    const filteredItems = data.filter(item => item.includes(text));
-    console.log(text);
-    console.log(filteredItems);
-    const formattedData = filteredItems
-      .map((item, index) => ({
-        id: index.toString(),
-        title: item.toString(),
-      }))
-      .flat();
-    setFilteredData(formattedData);
+    if (onChangeText) onChangeText(text);
   };
+
+  useEffect(() => {
+    setFieldValue(name, search);
+  }, [search]);
 
   const renderItemGroup = (itemGroup: TAutocompleteDropdownItem[]) => (
-    <View style={styles.itemContainer}>
-      {itemGroup.map(item => (
+    <FlatList
+      data={itemGroup}
+      keyExtractor={item => item.id.toString()}
+      renderItem={({ item }) => (
         <TouchableOpacity
-          key={item.id}
           style={styles.itemContainer}
           onPress={() => (item && item.title ? handleItemClick(item.title) : null)}
         >
           <Text style={styles.itemText}>{item.title}</Text>
         </TouchableOpacity>
-      ))}
-    </View>
+      )}
+    />
   );
+
+  const inputPropsPassed: Props = props;
+  inputPropsPassed.onChangeText = onChangeTextInterceptor;
+
   return (
     <View style={styles.container}>
       <SearchBar
-        onChangeText={text => {
-          updateSearch(text);
-          setFieldValue(name, text);
-        }}
+        onChangeText={onChangeTextInterceptor}
         value={value}
         onBlur={() => {
           onBlur(name);
@@ -89,39 +71,15 @@ const Search = (props, { list }: { list: Promise<searchList[]> }) => {
       />
 
       <FlatList
-        data={sliceResults(filteredData)}
+        style={search === "" ? undefined : styles.allContainer}
+        nestedScrollEnabled={true}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        data={list}
         keyExtractor={(item, index) => index.toString()}
-        horizontal
-        pagingEnabled // 이 옵션을 추가하여 3개씩 스크롤되도록 설정합니다.
-        showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {renderItemGroup(item)}
-          </ScrollView>
-        )}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => <View>{renderItemGroup([item])}</View>}
       />
-
-      {/* <AutocompleteDropdown
-        clearOnFocus={false}
-        closeOnBlur={true}
-        closeOnSubmit={false}
-        initialValue={selectedItem}
-        onSelectItem={(item: TAutocompleteDropdownItem | null) => {
-          if (item) {
-            setSearch(item.title || "");
-            setSelectedItem(item.title || "");
-            setFieldValue(name, item.title || "");
-          } else {
-            setSearch("");
-            setSelectedItem("");
-            setFieldValue(name, "");
-          }
-        }}
-        dataSet={filteredData.map((item, index) => ({
-          id: index.toString(),
-          title: item.title || "",
-        }))}
-      /> */}
     </View>
   );
 };
@@ -141,9 +99,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
     borderRadius: 30,
   },
+  allContainer: {
+    height: 200,
+  },
   itemContainer: {
     padding: 20,
-    borderBottomColor: "#ccc",
     borderBottomWidth: 1,
   },
   itemText: {
