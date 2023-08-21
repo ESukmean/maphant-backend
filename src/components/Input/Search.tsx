@@ -1,44 +1,37 @@
-import { SearchBar, SocialIcon } from "@rneui/themed";
-import React, { useCallback, useEffect, useState } from "react";
+import { SearchBar } from "@rneui/themed";
+import React, { useEffect, useState } from "react";
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TAutocompleteDropdownItem } from "react-native-autocomplete-dropdown";
 
-type Props = {
-  field: unknown;
-  form: unknown;
-  list: TAutocompleteDropdownItem[];
-  onChangeText: (text: string) => void;
-};
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Search: React.FC<Props> = props => {
+import { searchList } from "../../types/SearchList";
+
+const Search = (props, { list }: { list: Promise<searchList[]> }) => {
   const [search, setSearch] = useState("");
+  const [data, setData] = useState<string[]>([]);
+  const [filteredData, setFilteredData] = useState<TAutocompleteDropdownItem[]>([]);
   const handleItemClick = (itemTitle: string) => {
     setSearch(itemTitle);
     setFieldValue(name, itemTitle);
   };
 
   const {
-    // @ts-ignore
     field: { name, onBlur, value },
-    // @ts-ignore
     form: { setFieldValue, setFieldTouched },
-    list,
-    onChangeText,
     ...inputProps
   } = props;
 
-  const onChangeTextInterceptor = (text: string) => {
-    setSearch(text);
-    setFieldValue(name, text);
-
-    if (onChangeText) onChangeText(text);
-  };
-
   useEffect(() => {
-    setFieldValue(name, search);
-  }, [search]);
-
-  const sliceResults = useCallback((items: TAutocompleteDropdownItem[]) => {
+    props.list().then((res: any) => {
+      setData(res.data);
+      // const formattedData = res.data.map((item: any, index: any) => ({
+      //   id: index.toString(),
+      //   title: item
+      // }));
+      // setFilteredData(formattedData);
+      return res.data;
+    });
+  }, [search, list]);
+  const sliceResults = (items: TAutocompleteDropdownItem[]) => {
     const slicedItems = [];
     let i = 0;
     const numColumns = 3;
@@ -47,29 +40,44 @@ const Search: React.FC<Props> = props => {
       i += numColumns;
     }
     return slicedItems;
-  }, []);
+  };
+
+  const updateSearch = (text: string) => {
+    setSearch(text);
+
+    // 검색어를 이용하여 데이터를 필터링
+    const filteredItems = data.filter(item => item.includes(text));
+    console.log(text);
+    console.log(filteredItems);
+    const formattedData = filteredItems
+      .map((item, index) => ({
+        id: index.toString(),
+        title: item.toString(),
+      }))
+      .flat();
+    setFilteredData(formattedData);
+  };
 
   const renderItemGroup = (itemGroup: TAutocompleteDropdownItem[]) => (
-    <ScrollView style={styles.itemContainer}>
+    <View style={styles.itemContainer}>
       {itemGroup.map(item => (
         <TouchableOpacity
           key={item.id}
-          style={styles.detailContainer}
+          style={styles.itemContainer}
           onPress={() => (item && item.title ? handleItemClick(item.title) : null)}
         >
           <Text style={styles.itemText}>{item.title}</Text>
         </TouchableOpacity>
       ))}
-    </ScrollView>
+    </View>
   );
-
-  const inputPropsPassed: Props = props;
-  inputPropsPassed.onChangeText = onChangeTextInterceptor;
-
   return (
     <View style={styles.container}>
       <SearchBar
-        onChangeText={onChangeTextInterceptor}
+        onChangeText={text => {
+          updateSearch(text);
+          setFieldValue(name, text);
+        }}
         value={value}
         onBlur={() => {
           onBlur(name);
@@ -80,9 +88,8 @@ const Search: React.FC<Props> = props => {
         {...inputProps}
       />
 
-      {/* <FlatList
-        keyboardShouldPersistTaps="handled"
-        data={sliceResults(list)}
+      <FlatList
+        data={sliceResults(filteredData)}
         keyExtractor={(item, index) => index.toString()}
         horizontal
         pagingEnabled // 이 옵션을 추가하여 3개씩 스크롤되도록 설정합니다.
@@ -92,21 +99,29 @@ const Search: React.FC<Props> = props => {
             {renderItemGroup(item)}
           </ScrollView>
         )}
-      /> */}
-
-      <FlatList
-        // keyboardShouldPersistTaps="handled"
-        data={sliceResults(list)}
-        keyExtractor={(item, index) => index.toString()}
-        // horizontal
-        pagingEnabled // 이 옵션을 추가하여 3개씩 스크롤되도록 설정합니다.
-        // showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {renderItemGroup(item)}
-          </ScrollView>
-        )}
       />
+
+      {/* <AutocompleteDropdown
+        clearOnFocus={false}
+        closeOnBlur={true}
+        closeOnSubmit={false}
+        initialValue={selectedItem}
+        onSelectItem={(item: TAutocompleteDropdownItem | null) => {
+          if (item) {
+            setSearch(item.title || "");
+            setSelectedItem(item.title || "");
+            setFieldValue(name, item.title || "");
+          } else {
+            setSearch("");
+            setSelectedItem("");
+            setFieldValue(name, "");
+          }
+        }}
+        dataSet={filteredData.map((item, index) => ({
+          id: index.toString(),
+          title: item.title || "",
+        }))}
+      /> */}
     </View>
   );
 };
@@ -128,13 +143,7 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     padding: 20,
-    height: 200,
-    borderBottomColor: "red",
-    borderBottomWidth: 1,
-  },
-  detailContainer: {
-    padding: 20,
-    // borderBottomColor: "red",
+    borderBottomColor: "#ccc",
     borderBottomWidth: 1,
   },
   itemText: {

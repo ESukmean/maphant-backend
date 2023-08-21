@@ -5,6 +5,7 @@ import { Alert, StyleSheet, Text } from "react-native";
 import { confirmEmail } from "../../Api/member/signUp";
 import { Container, Input, TextButton } from "../../components/common";
 import { SignUpFormParams } from "../../Navigator/SigninRoutes";
+import { ISignupForm } from "../../types/SignUp";
 
 const Confirm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -22,7 +23,8 @@ const Confirm: React.FC = () => {
     if (params && params.email) setEmail(params.email);
   }, [route]);
 
-  const checkCode = () => {
+  const checkCode = (values: ISignupForm) => {
+    values.email = email;
     if (showNextButton) {
       navigation.navigate("SearchUniversity", params);
     }
@@ -42,7 +44,7 @@ const Confirm: React.FC = () => {
           setShowNextButton(true);
         }
       })
-      .catch(error => console.log(error));
+      .catch(error => console.error(error));
   };
 
   useEffect(() => {
@@ -85,7 +87,7 @@ const Confirm: React.FC = () => {
       <Container style={{ marginBottom: 20 }}>
         <Text>인증 번호</Text>
         <Input
-          // ref={verificationCodeInputRef}
+          inputRef={verificationCodeInputRef}
           value={verificationCode}
           onChangeText={setVerificationCode}
           placeholder="인증번호 6자리를 입력해주세요."
