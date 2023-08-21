@@ -1,6 +1,5 @@
 import { Entypo } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { isEqual } from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -10,8 +9,6 @@ import { NavigationProps } from "../../Navigator/Routes";
 import { MessageList } from "../../types/DM";
 
 const Mail: React.FC = () => {
-  //is_read : 안 읽었을때 1 = true 읽었을 때 0 = false
-  // sendDate 가 들어왔을 때 분전 , 시간 전으로 바꾸는 코드
   function formatTimeDifference(targetDate: Date): string {
     const currentDate = new Date();
     const timeDifference = currentDate.getTime() - targetDate.getTime();
@@ -42,9 +39,6 @@ const Mail: React.FC = () => {
   const searchUser = () => {
     navigation.navigate("SearchUser" as never);
   };
-
-  //useCallback을 사용하면 의존성이 변경되는 경우(chatList 변경되는 경우 인듯?), 이전에 기억하고 있던 함수 자체와 비교해서 다른 경우 리랜더
-  // 원래 object 끼리 ==, === 연산자 결과는 무조건 false인데 useCallback을 사용하면 동등성을 보장할 수 있음
   const fetchChatRooms = useCallback(async () => {
     try {
       await receiveChatrooms().then(res => {
@@ -53,14 +47,13 @@ const Mail: React.FC = () => {
         }
       });
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   }, [chatList]);
 
   useEffect(() => {
     fetchChatRooms();
   }, [fetchChatRooms]);
-
   return (
     <Container style={{ flex: 1 }}>
       <View style={styles.header}>
@@ -74,13 +67,11 @@ const Mail: React.FC = () => {
               <TouchableOpacity
                 key={mail.id}
                 onPress={() => {
-                  // console.log(mail.id);
-                  // 채티방 페이지로 상대방 아이디랑, 닉네임 같이 넘김
                   navigation.navigate("Chatroom", {
                     id: mail.other_id,
                     nickname: mail.other_nickname,
-                    roomId: parseInt(mail.id),
-                  });
+                    roomId: mail.id,
+                  } as never);
                 }}
               >
                 <View style={[styles.mail, mail.unread_count ? styles.mail_true : styles.mail]}>
@@ -88,10 +79,8 @@ const Mail: React.FC = () => {
                     <Text style={styles.nick}>{mail.other_nickname}</Text>
 
                     <Text style={{ alignContent: "space-between" }}>
-                      {/* 시간이 최근에 채팅한 시간이 아니라 최초에 채팅한 시간을 기준으로 하고 있음, 이것도 백엔드에서 해야하는 것 같음 */}
                       {formatTimeDifference(new Date(mail.time))}
                     </Text>
-                    {/* 삭제 기능 제대로 됨 ,나중에 버튼 새로 깔끔하게 만들기 */}
                   </View>
                   <Container style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     <Text style={styles.content}>{mail.last_content}</Text>
@@ -142,7 +131,6 @@ const styles = StyleSheet.create({
 
   sender: {
     backgroundColor: "white",
-
     border: "2px",
   },
   mail: {
@@ -171,7 +159,6 @@ const styles = StyleSheet.create({
     alignContent: "space-between",
   },
   icon: {
-    // backgroundColor: "transparent",
     color: "black",
     position: "absolute",
     right: "10%",
