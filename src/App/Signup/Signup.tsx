@@ -2,7 +2,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { Field, Formik, FormikErrors } from "formik";
 import React, { useCallback } from "react";
 // import { SearchBar } from "@rneui/themed";
-import { ScrollView } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 import * as Yup from "yup";
 
 import {
@@ -115,121 +115,123 @@ const Signup = () => {
 
   return (
     <Container isForceKeyboardAvoiding={true} style={{ backgroundColor: "white" }}>
-      <ScrollView
+      <FlatList
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ backgroundColor: "white" }}
-      >
-        <Formik
-          validateOnChange
-          initialValues={SignupForm}
-          validationSchema={validationSchema}
-          onSubmit={async values => {
-            UIStore.showLoadingOverlay();
-            await signup(values)
-              .then(() => {
-                return navigation.navigate("Confirm", values);
-              })
-              .catch(error => {
-                alert(`회원가입 실패: ${error}\n다시 시도해주세요.`);
-              })
-              .finally(() => {
-                UIStore.hideLoadingOverlay();
-              });
-          }}
-        >
-          {({ handleSubmit, errors }) => (
-            <Container
-              style={{
-                flex: 1,
-                backgroundColor: "#fff",
-                justifyContent: "center",
-                paddingHorizontal: 30,
-              }}
-            >
-              <Field
-                placeholder="이메일"
-                name="email"
-                component={CustomInput}
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-              />
-              <Spacer size={10} />
-
-              <Field
-                placeholder="비밀번호"
-                name="password"
-                component={CustomInput}
-                secureTextEntry
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-              />
-              <Spacer size={10} />
-
-              <Field
-                placeholder="비밀번호 확인"
-                name="confirmPassword"
-                component={CustomInput}
-                secureTextEntry
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-              />
-              <Spacer size={10} />
-
-              <Field
-                placeholder="닉네임"
-                name="nickname"
-                component={CustomInput}
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-              />
-              <Spacer size={10} />
-
-              <Field
-                placeholder="이름"
-                name="name"
-                component={CustomInput}
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-              />
-              <Spacer size={10} />
-
-              <Field
-                placeholder="학교 검색"
-                name="university"
-                component={SearchByFilter}
-                list={universityList}
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-              />
-
-              <Spacer size={10} />
-
-              <Field
-                placeholder="학번"
-                name="studentNumber"
-                component={CustomInput}
-                onKeyPress={processChange}
-                placeholderTextColor={placeholderTextColor}
-                ㄴ
-              />
-              <Spacer size={40} />
-              <TextButton
-                backgroundColor="#000"
-                fontColor="white"
-                paddingHorizontal={20}
-                paddingVertical={15}
-                borderRadius={30}
-                fontSize={18}
-                onPress={() => onSubmit(errors, handleSubmit)}
+        data={[SignupForm]}
+        renderItem={() => (
+          <Formik
+            validateOnChange
+            initialValues={SignupForm}
+            validationSchema={validationSchema}
+            onSubmit={async values => {
+              UIStore.showLoadingOverlay();
+              await signup(values)
+                .then(() => {
+                  return navigation.navigate("Confirm", values);
+                })
+                .catch(error => {
+                  alert(`회원가입 실패: ${error}\n다시 시도해주세요.`);
+                })
+                .finally(() => {
+                  UIStore.hideLoadingOverlay();
+                });
+            }}
+          >
+            {({ handleSubmit, errors }) => (
+              <Container
+                style={{
+                  flex: 1,
+                  backgroundColor: "#fff",
+                  justifyContent: "center",
+                  paddingHorizontal: 30,
+                }}
               >
-                회원가입
-              </TextButton>
+                <Field
+                  placeholder="이메일"
+                  name="email"
+                  component={CustomInput}
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                />
+                <Spacer size={10} />
 
-              <Spacer size={50} />
-            </Container>
-          )}
-        </Formik>
-      </ScrollView>
+                <Field
+                  placeholder="비밀번호"
+                  name="password"
+                  component={CustomInput}
+                  secureTextEntry
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                />
+                <Spacer size={10} />
+
+                <Field
+                  placeholder="비밀번호 확인"
+                  name="confirmPassword"
+                  component={CustomInput}
+                  secureTextEntry
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                />
+                <Spacer size={10} />
+
+                <Field
+                  placeholder="닉네임"
+                  name="nickname"
+                  component={CustomInput}
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                />
+                <Spacer size={10} />
+
+                <Field
+                  placeholder="이름"
+                  name="name"
+                  component={CustomInput}
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                />
+                <Spacer size={10} />
+
+                <Field
+                  placeholder="학교 검색"
+                  name="university"
+                  component={SearchByFilter}
+                  list={universityList}
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                />
+
+                <Spacer size={10} />
+
+                <Field
+                  placeholder="학번"
+                  name="studentNumber"
+                  component={CustomInput}
+                  onKeyPress={processChange}
+                  placeholderTextColor={placeholderTextColor}
+                  ㄴ
+                />
+                <Spacer size={40} />
+                <TextButton
+                  backgroundColor="#000"
+                  fontColor="white"
+                  paddingHorizontal={20}
+                  paddingVertical={15}
+                  borderRadius={30}
+                  fontSize={18}
+                  onPress={() => onSubmit(errors, handleSubmit)}
+                >
+                  회원가입
+                </TextButton>
+
+                <Spacer size={50} />
+              </Container>
+            )}
+          </Formik>
+        )}
+      />
     </Container>
   );
 };
