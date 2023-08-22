@@ -215,7 +215,7 @@ const Signup = () => {
                 />
                 <Spacer size={40} />
                 <TextButton
-                  backgroundColor="#000"
+                  backgroundColor="#5299EB"
                   fontColor="white"
                   paddingHorizontal={20}
                   paddingVertical={15}
