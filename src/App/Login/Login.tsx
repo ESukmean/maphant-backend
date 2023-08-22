@@ -58,15 +58,16 @@ const Login: React.FC = () => {
           paddingHorizontal: 16,
         }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View>
-          <Spacer size={100} />
+          <Spacer size={40} />
           <ImageBox
             source={require("../../../assets/logo_ko.png")}
             isCenter={true}
-            width={100}
+            width={200}
           ></ImageBox>
-          <Spacer size={100} />
+          {/* <Spacer size={20} /> */}
           <Container style={{ width: "100%" }} isItemCenter={true} paddingHorizontal={0}>
             <Input
               style={{ paddingVertical: "5%" }}
@@ -86,33 +87,35 @@ const Login: React.FC = () => {
               value={password}
               secureTextEntry={true}
             ></Input>
-            <Spacer size={50} />
+            <Spacer size={20} />
             <TextButton onPress={loginHandler}>로그인</TextButton>
           </Container>
-          <Spacer size={30} />
+          {/* <Spacer size={20} /> */}
           <TextButton
             fontColor="#aaa"
             backgroundColor="transparent"
-            paddingVertical={16}
+            paddingVertical={15}
+            fontSize={16}
             onPress={() => {
               navigation.navigate("TermsSet" as never);
             }}
           >
             Don't have any account? Sign up
           </TextButton>
-        </View>
-        <View>
           <TextButton
             fontColor="#aaa"
             backgroundColor="transparent"
-            paddingVertical={16}
+            paddingVertical={0}
+            fontSize={16}
             onPress={() => {
               navigation.navigate("find" as never);
             }}
           >
             PW 찾기
           </TextButton>
-          <Spacer size={30} />
+        </View>
+        <View>
+          <Spacer size={40} />
         </View>
       </ScrollView>
     </Container>

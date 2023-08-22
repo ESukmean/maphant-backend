@@ -211,22 +211,27 @@ const Signup = () => {
                   component={CustomInput}
                   onKeyPress={processChange}
                   placeholderTextColor={placeholderTextColor}
-                  ㄴ
                 />
                 <Spacer size={40} />
                 <TextButton
+                  style={{
+                    opacity: Object.keys(errors).length > 0 ? 0.5 : 1,
+                  }}
                   backgroundColor="#5299EB"
                   fontColor="white"
                   paddingHorizontal={20}
                   paddingVertical={15}
                   borderRadius={30}
                   fontSize={18}
-                  onPress={() => onSubmit(errors, handleSubmit)}
+                  disabled={Object.keys(errors).length > 0 ? true : false}
+                  onPress={() => {
+                    onSubmit(errors, handleSubmit);
+                  }}
                 >
                   회원가입
                 </TextButton>
 
-                <Spacer size={50} />
+                <Spacer size={70} />
               </Container>
             )}
           </Formik>
