@@ -21,7 +21,7 @@ const Chatroom: React.FC = () => {
     setFlag(true);
     fetchChatLists(params.roomId);
   };
-  const fetchChatLists = async (roomId: number) => {
+  const fetchChatLists = (roomId: number) => {
     chartLists(roomId, page)
       .then(res => {
         if (res.success) {
@@ -31,13 +31,17 @@ const Chatroom: React.FC = () => {
           setFlag(false);
         }
       })
-      .catch(e => console.error("fetchChatLists에러", e));
+      .catch(e => {
+        if (page !== null) console.error("fetchChatLists에러", e);
+      });
   };
   const send = async () => {
     await sendContent(params.id, content)
       .then(res => {
         if (res.success) {
-          if (params.roomId === 0) params.roomId = res.data?.room_id;
+          if (params.roomId === 0) {
+            params.roomId = res.data?.room_id;
+          }
           fetchChatLists(params.roomId);
         }
       })
@@ -48,6 +52,13 @@ const Chatroom: React.FC = () => {
   useEffect(() => {
     if (params.roomId) fetchChatLists(params.roomId);
   }, [params.roomId]);
+
+  useEffect(() => {
+    // 업데이트 후 화면을 다시 렌더링합니다.
+    console.error("시발 안된다고 ㅅㅂ");
+  }, [receiveContent]);
+
+  console.log(receiveContent);
 
   function getCurrentTime(targetDate: Date) {
     const hours = targetDate.getHours();
@@ -144,7 +155,9 @@ const Chatroom: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </Container>
-        {flag ? <ActivityIndicator size="small" color="black" /> : <Text></Text>}
+        {flag && receiveContent.length > 20 && page != null ? (
+          <ActivityIndicator size="small" color="black" />
+        ) : null}
         <Container style={{ flex: 10 }}>
           <FlatList
             data={receiveContent}
@@ -158,9 +171,10 @@ const Chatroom: React.FC = () => {
         <Container
           paddingHorizontal={0}
           style={{
-            flex: 2,
+            flex: 1,
             flexDirection: "row",
             padding: "3%",
+            marginBottom: 90,
           }}
         >
           <Input
@@ -177,9 +191,9 @@ const Chatroom: React.FC = () => {
             style={{
               flex: 1,
               marginLeft: 10,
-              paddingHorizontal: 0,
+              paddingHorizontal: 10,
               paddingVertical: 0,
-              borderRadius: 300,
+              borderRadius: 100,
               width: "100%",
               height: "100%",
             }}

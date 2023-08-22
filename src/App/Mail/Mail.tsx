@@ -99,15 +99,21 @@ const Mail: React.FC = () => {
       <Container
         style={{
           backgroundColor: "#e9ecef",
-          borderRadius: 100,
+          borderRadius: 50,
           position: "absolute",
           right: "10%",
           bottom: "5%",
         }}
       >
         <TextButton
-          style={{ flex: 1, backgroundColor: "#e9ecef" }}
-          paddingVertical={10}
+          style={{
+            flex: 1,
+            backgroundColor: "#e9ecef",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 10,
+          }}
+          paddingVertical={16}
           onPress={searchUser}
         >
           <Entypo name="plus" size={24} color="black" />
