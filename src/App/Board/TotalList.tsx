@@ -1,43 +1,49 @@
-import { useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { BoardArticle, BoardType } from "../../types/Board";
+import { listHotBoardTotal } from "../../Api/board";
+import { Container, TextThemed } from "../../components/common";
+import { NavigationProps } from "../../Navigator/Routes";
+import { BoardType, HotBoard } from "../../types/Board";
 import PostSummary from "./PostSummary";
 
-const DetailBoardList = () => {
-  // const route = useRoute();
-  // const params = route.params as NavigationProps["DetailList"];
-  // console.log(params?.boardType);
-  // const boardType = params?.boardType;
-
+const TotalList = () => {
   const params = useRoute().params as { boardType: BoardType };
   const boardType = params?.boardType;
+  const navigation = useNavigation<NavigationProps>();
 
-  const [boardData] = useState<BoardArticle[]>([]);
-  // // useEffect(() => {
-  //   listArticle(params?.boardType).then((data: BoardArticle[]) => {
-  //     setboardData(data);
-  //   });
-  // }, []);
+  const [boardData, setboardData] = useState<HotBoard[]>([]);
+
+  useEffect(() => {
+    listHotBoardTotal(1, 50).then(data => setboardData(data.data.list as HotBoard[]));
+  }, []);
+  const detailContent = (typeId: number, boardId: number) => {
+    if (typeId == 2) {
+      navigation.navigate("QnAdetail", { id: boardId });
+    } else {
+      navigation.navigate("BoardDetail", { id: boardId });
+    }
+  };
   return (
-    <ScrollView style={styles.container}>
-      {boardData.map(board => (
-        <View key={board.boardId} style={styles.body}>
-          <Pressable onPress={() => console.log(board.title)}>
-            <Text style={styles.board}>{boardType}</Text>
-            <PostSummary post={board} boardType={boardType} />
-          </Pressable>
-        </View>
-      ))}
-    </ScrollView>
+    <Container style={styles.container}>
+      <ScrollView>
+        {boardData.map(board => (
+          <View key={board.boardId} style={styles.body}>
+            <Pressable onPress={() => detailContent(board.typeId, board.boardId)}>
+              <TextThemed style={styles.board}>{board.type}</TextThemed>
+              <PostSummary post={board} boardType={boardType} />
+            </Pressable>
+          </View>
+        ))}
+      </ScrollView>
+    </Container>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
@@ -52,4 +58,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DetailBoardList;
+export default TotalList;

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { deleteChat, receiveChatrooms } from "../../Api/member/FindUser";
-import { Container, TextButton } from "../../components/common";
+import { Container, TextButton, TextThemed } from "../../components/common";
 import { NavigationProps } from "../../Navigator/Routes";
 import { MessageList } from "../../types/DM";
 
@@ -61,38 +61,51 @@ const Mail: React.FC = () => {
       </View>
       <ScrollView>
         <View style={styles.sender}>
-          <View style={{ marginBottom: 10 }}>
-            {chatList.map(mail => (
-              // eslint-disable-next-line react/jsx-key
-              <TouchableOpacity
-                key={mail.id}
-                onPress={() => {
-                  navigation.navigate("Chatroom", {
-                    id: mail.other_id,
-                    nickname: mail.other_nickname,
-                    roomId: mail.id,
-                  } as never);
-                }}
-              >
-                <View style={[styles.mail, mail.unread_count ? styles.mail_true : styles.mail]}>
-                  <View style={styles.space}>
-                    <Text style={styles.nick}>{mail.other_nickname}</Text>
-
-                    <Text style={{ alignContent: "space-between" }}>
-                      {formatTimeDifference(new Date(mail.time))}
-                    </Text>
-                  </View>
-                  <Container style={{ maxHeight: 100 }}>
-                    <Text style={styles.content} numberOfLines={2}>
-                      {mail.last_content}
-                    </Text>
-                    <TextButton style={{ marginLeft: 320 }} onPress={() => del(mail.id)}>
-                      삭제
-                    </TextButton>
-                  </Container>
-                </View>
-              </TouchableOpacity>
-            ))}
+          <View>
+            <View
+              style={{ borderBottomWidth: 1, borderColor: "rgba(232,234,236,0.5)", height: 0 }}
+            ></View>
+            <View style={{ marginBottom: 10 }}>
+              {chatList.map(mail => (
+                // eslint-disable-next-line react/jsx-key
+                <>
+                  <TouchableOpacity
+                    key={mail.id}
+                    onPress={() => {
+                      navigation.navigate("Chatroom", {
+                        id: mail.other_id,
+                        nickname: mail.other_nickname,
+                        roomId: mail.id,
+                      } as never);
+                    }}
+                  >
+                    <View style={[styles.mail, mail.unread_count ? styles.mail_true : styles.mail]}>
+                      <View style={styles.space}>
+                        <TextThemed style={styles.nick}>{mail.other_nickname}</TextThemed>
+                        <TextThemed style={{ alignContent: "space-between" }}>
+                          {formatTimeDifference(new Date(mail.time))}
+                        </TextThemed>
+                      </View>
+                      <Container style={{ maxHeight: 100 }}>
+                        <TextThemed style={styles.content} numberOfLines={2}>
+                          {mail.last_content}
+                        </TextThemed>
+                        <TextButton style={{ marginLeft: 320 }} onPress={() => del(mail.id)}>
+                          삭제
+                        </TextButton>
+                      </Container>
+                    </View>
+                  </TouchableOpacity>
+                  <View
+                    style={{
+                      borderBottomWidth: 1,
+                      borderColor: "rgba(232,234,236,0.5)",
+                      height: 0,
+                    }}
+                  ></View>
+                </>
+              ))}
+            </View>
           </View>
         </View>
       </ScrollView>
