@@ -3,7 +3,6 @@ package com.tovelop.maphant.controller
 
 import com.tovelop.maphant.configure.security.token.TokenAuthToken
 import com.tovelop.maphant.dto.*
-import com.tovelop.maphant.mapper.BoardMapper
 import com.tovelop.maphant.service.*
 import com.tovelop.maphant.type.paging.Pagination
 import com.tovelop.maphant.type.paging.PagingDto
@@ -26,7 +25,8 @@ class BoardController(
     @Autowired val rateLimitingService: RateLimitingService,
     @Autowired val tagService: TagService,
     @Autowired val pollService: PollService,
-    @Autowired val searchService: SearchService
+    @Autowired val searchService: SearchService,
+    @Autowired val bookmarkService: BookmarkService
 ) {
     val sortCriterionMap = mapOf(1 to "created_at", 2 to "like_cnt")
 
@@ -106,8 +106,7 @@ class BoardController(
                         FindBoardDTO(it.id, parentId, page, recordSize, sortCriterionMap[sortCriterionId]!!),
                         auth.getUserId(),
                         category
-                    ),
-                    Pagination(
+                    ), Pagination(
                         if (boardTypeId == aBoardTypeId) boardService.getABoardCnt(parentId!!)
                         else boardService.getBoardSizeByCategoryIdAndBoardTypeId(category, it.id),
                         PagingDto(page, recordSize, pageSize)
@@ -116,13 +115,11 @@ class BoardController(
             }
         } else {
             BoardListInfo(
-                null,
-                boardService.findBoardList(
+                null, boardService.findBoardList(
                     FindBoardDTO(boardTypeId, parentId, page, recordSize, sortCriterionMap[sortCriterionId]!!),
                     auth.getUserId(),
                     category
-                ),
-                Pagination(
+                ), Pagination(
                     if (boardTypeId == aBoardTypeId) boardService.getABoardCnt(parentId!!)
                     else boardService.getBoardSizeByCategoryIdAndBoardTypeId(category, boardTypeId),
                     PagingDto(page, recordSize, pageSize)
@@ -162,7 +159,7 @@ class BoardController(
         return ResponseEntity.ok(Response.stateOnly(true))
     }
 
-    data class BoardInfo(val board: ExtBoardDTO, val poll: Result<PollInfoDTO>)
+    data class BoardInfo(val board: ExtBoardDTO, val poll: Any?)
 
     @GetMapping("{boardId}/")
     fun readBoard(@PathVariable("boardId") boardId: Int): ResponseEntity<Any> {
@@ -170,19 +167,49 @@ class BoardController(
         if (auth.isNotLogged()) {
             return ResponseEntity.badRequest().body(Response.error<Any>("로그인 안됨"))
         }
-        val board = boardService.findBoard(boardId, auth.getUserId())
-        if (board == null || boardService.getIsHideByBoardId(boardId) == null) {
+        val tmpBoard = boardService.findBoard(boardId, auth.getUserId())
+        if (tmpBoard == null || boardService.getIsHideByBoardId(boardId) == null) {
             return ResponseEntity.badRequest().body(Response.error<Any>("게시글이 존재하지 않습니다."))
         }
         if (boardService.getIsHideByBoardId(boardId)!!) {
-            if (board.userId != auth.getUserId() && auth.getUserRole() != "admin") {
+            if (tmpBoard.userId != auth.getUserId() && auth.getUserRole() != "admin") {
                 return ResponseEntity.badRequest().body(Response.error<Any>("권한이 없습니다."))
             }
         }
+        //익명 게시글인 경우 userId 제공 안함 따라서 새로운 extBoardDTO 생성
+        //컨트롤러에서 userId를 이용함 따라서 userId를 매퍼단에서 가져오지 않게 수정하기는 힘듬.
+        val board = tmpBoard.setIsAnonymous()
+
+        val pollId = pollService.getPollIdByBoardId(boardId)
+        board.addBookmark(bookmarkService.isBookmarked(auth.getUserId(), boardId))
+        //투표 없는 경우
+        if(pollId==null){
+            return ResponseEntity.ok(
+                Response.success(
+                    BoardInfo(
+                        board, null
+                    )
+                )
+            )
+        }
+        val optionList = pollService.getPollByBoardId(boardId, auth.getUserId())
+        //투표한 경우
+        if (pollService.isPolledUser(auth.getUserId(), pollId) == 0) {
+            return ResponseEntity.ok(
+                Response.success(
+                    BoardInfo(
+                        board, pollService.getPoll(pollId)
+                    )
+                )
+            )
+        }
+        if (optionList.getOrNull() == null) return ResponseEntity.badRequest()
+            .body(Response.error<Any>("삭제 됐거나 없는 투표입니다."))
+        //투표하지 않은 경우
         return ResponseEntity.ok(
             Response.success(
                 BoardInfo(
-                    board, pollService.getPollByBoardId(boardId, auth.getUserId())
+                    board, optionList.getOrNull()
                 )
             )
         )
@@ -234,12 +261,12 @@ class BoardController(
         if (badWordFiltering.hasBadWords(board.title)) {
             return ResponseEntity.badRequest().body(Response.error("제목에는 비속어를 적을 수 없습니다."))
         }
-        board.body=badWordFiltering.filterBadWords(board.body)
+        board.body = badWordFiltering.filterBadWords(board.body)
         val boardDto = board.toBoardDTO(auth.getUserId(), category)
         boardService.insertBoard(boardDto)
         rateLimitingService.requestCheck(auth.getUserId(), "WRITE_POST")
 
-        if(board.poll != null) { //투표생성
+        if(board.poll != null && !board.poll.title.isNullOrEmpty() && !board.poll.options.isEmpty()) { //투표생성
             val poll = PollDTO(
                 board.poll.id,
                 boardDto.id as Int,
@@ -261,7 +288,7 @@ class BoardController(
             }
         }
 
-        searchService.create(boardDto.id!!,boardDto.title,boardDto.body,board.tagNames)
+        searchService.create(boardDto.id!!, boardDto.title, boardDto.body, board.tagNames)
 
 
         // 제목 내용 빈칸인지 확인
@@ -295,7 +322,7 @@ class BoardController(
         if (badWordFiltering.hasBadWords(board.title)) {
             return ResponseEntity.badRequest().body(Response.error("제목에는 비속어를 적을 수 없습니다."))
         }
-        board.body=badWordFiltering.filterBadWords(board.body)
+        board.body = badWordFiltering.filterBadWords(board.body)
         boardService.updateBoard(board.toUpdateBoardDTO())
         searchService.update(board.id, board.title, board.body, board.tags)
         // 태그 수정하기

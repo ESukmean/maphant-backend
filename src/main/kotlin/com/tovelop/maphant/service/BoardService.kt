@@ -45,7 +45,6 @@ class BoardService(@Autowired val boardMapper: BoardMapper,
     fun findBoard(boardId: Int, userId: Int): ExtBoardDTO? {
         val board = boardMapper.findBoardById(userId,boardId)
         board?.tags = tagMapper.findBoardTags(boardId)
-        board?.pollInfo = pollService.getPollByBoardId(boardId,userId).getOrNull()
         return board
     }
 

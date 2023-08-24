@@ -1,11 +1,12 @@
 package com.tovelop.maphant.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.tovelop.maphant.service.BookmarkService
 import java.time.LocalDateTime
 
 data class ExtBoardDTO(
     val id: Int?,
-    @JsonIgnore
+//    @JsonIgnore
     val userId: Int,
     val parentId: Int?,
     val categoryId: Int,
@@ -26,10 +27,11 @@ data class ExtBoardDTO(
     val isLike: Boolean,
     val isMyBoard: Boolean,
     var tags: List<ReqTagDTO>,
-    var pollInfo: PollInfoDTO?
+    var isBookmarked: Boolean = false,
 ) {
     val imagesUrl: List<String>
         get() = imagesUrlString?.split(",") ?: listOf()
+
     constructor(
         id: Int?,
         userId: Int,
@@ -51,9 +53,64 @@ data class ExtBoardDTO(
         imagesUrl: String?,
         isLike: Boolean,
         isMyBoard: Boolean,
-    ): this(
-        id, userId, parentId, categoryId, userNickname, typeId, title, body, state, isHide, isComplete, isAnonymous, createdAt, modifiedAt, commentCnt, likeCnt, reportCnt, imagesUrl, isLike, isMyBoard, listOf(),null
+    ) : this(
+        id,
+        userId,
+        parentId,
+        categoryId,
+        userNickname,
+        typeId,
+        title,
+        body,
+        state,
+        isHide,
+        isComplete,
+        isAnonymous,
+        createdAt,
+        modifiedAt,
+        commentCnt,
+        likeCnt,
+        reportCnt,
+        imagesUrl,
+        isLike,
+        isMyBoard,
+        listOf(),
+        false
     )
+
+    fun addBookmark(bookmark: Boolean) {
+        this.isBookmarked = bookmark
+    }
+
+    fun setIsAnonymous(): ExtBoardDTO {
+        if (isAnonymous == 0) {
+            return this
+        }
+        return ExtBoardDTO(
+            id,
+            -1,
+            parentId,
+            categoryId,
+            userNickname,
+            typeId,
+            title,
+            body,
+            state,
+            isHide,
+            isComplete,
+            isAnonymous,
+            createdAt,
+            modifiedAt,
+            commentCnt,
+            likeCnt,
+            reportCnt,
+            imagesUrlString,
+            isLike,
+            isMyBoard,
+            tags,
+            isBookmarked
+        )
+    }
 }
 
 data class UpgradeExtBoardDTO(

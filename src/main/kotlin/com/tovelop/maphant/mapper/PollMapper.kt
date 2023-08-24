@@ -22,7 +22,7 @@ interface PollMapper {
 
     fun updateCount(optionId: Int, pollId: Int)
 
-    fun getPollIdByBoardId(boardId: Int): Int
+    fun getPollIdByBoardId(boardId: Int): Int?
 
     fun selectPollInfoById(pollId: Int, userId: Int): PollInfoDTO
 

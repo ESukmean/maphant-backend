@@ -16,4 +16,6 @@ interface BookmarkMapper {
     fun getBoardCount(userId: Int): Int
 
     fun deleteBoardById(userId: Int, boardId: Int): Int
+
+    fun isBookmarked(userId: Int, boardId: Int): Boolean?
 }

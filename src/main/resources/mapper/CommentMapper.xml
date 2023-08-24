@@ -27,16 +27,14 @@
         WHERE board_id = #{boardId}
           AND comment.state = 0
         ORDER BY comment.created_at
-        LIMIT #{params.recordSize} OFFSET #{params.offset}
+            LIMIT #{params.recordSize}
+        OFFSET #{params.offset}
     </select>
     <select id="findAllCommentByUser" resultType="CommentExtDTO">
         SELECT comment.id,
                comment.parent_id,
                comment.user_id,
-               CASE
-                   WHEN comment.user_id = #{targetUserId} THEN user.nickname
-                   ELSE 'Anonymous'
-                   END         as nickname,
+               user.nickname,
                board.type_id,
                board_type.name as type,
                comment.board_id,
@@ -60,7 +58,8 @@
         WHERE ((#{userId} != #{targetUserId} AND comment.is_anonymous = 0) OR comment.user_id = #{userId})
           AND comment.user_id = #{targetUserId}
         ORDER BY comment.created_at
-        LIMIT #{params.recordSize} OFFSET #{params.offset}
+            LIMIT #{params.recordSize}
+        OFFSET #{params.offset}
     </select>
     <insert id="insertComment">
         INSERT INTO comment(board_id, user_id, parent_id, body, created_at, is_anonymous)

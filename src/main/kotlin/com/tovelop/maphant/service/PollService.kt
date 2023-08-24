@@ -37,12 +37,12 @@ class PollService(val pollMapper: PollMapper) {
         }
     }
 
-    fun getPoll(pollId: Int): PollInfoDTO {
+    fun getPoll(pollId: Int): Result<PollInfoDTO> {
         // 투표 현황 조회, 투표 하지 않았을 때 사용
-        return pollMapper.selectPollInfo(pollId)
+        return Result.runCatching { pollMapper.selectPollInfo(pollId) }
     }
 
-    fun getPollIdByBoardId(boardId: Int): Int {
+    fun getPollIdByBoardId(boardId: Int): Int? {
         return pollMapper.getPollIdByBoardId(boardId)
     }
 

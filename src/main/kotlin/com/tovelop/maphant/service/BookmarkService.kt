@@ -35,4 +35,8 @@ class BookmarkService(@Autowired val bookmarkMapper: BookmarkMapper) {
     fun deleteBookmark(userId: Int, boardId: Int): Int {
         return bookmarkMapper.deleteBoardById(userId, boardId)
     }
+
+    fun isBookmarked(userId: Int, boardId: Int): Boolean {
+        return bookmarkMapper.isBookmarked(userId, boardId) ?: false
+    }
 }

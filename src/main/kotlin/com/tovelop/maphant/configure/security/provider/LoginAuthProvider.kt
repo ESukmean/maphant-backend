@@ -27,8 +27,7 @@ class LoginAuthProvider(
 
         val state = userData.getUserData().state
 
-        if(state == 0) throw BadCredentialsException("이메일 인증을 하지 않은 사용자입니다.")
-        else if(state == 2) throw BadCredentialsException("제제된 사용자입니다.")
+        if(state == 2) throw BadCredentialsException("제제된 사용자입니다.")
         else if(state == 3) throw BadCredentialsException("탈퇴된 사용자입니다.")
 
         val auth = tokenRepository.generateToken(userData)

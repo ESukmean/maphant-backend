@@ -3,6 +3,7 @@ package com.tovelop.maphant.configure.security.token
 import com.tovelop.maphant.configure.security.PasswordEncoderSHA512
 import com.tovelop.maphant.configure.security.UserData
 import com.tovelop.maphant.dto.UserDataDTO
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.GrantedAuthority
@@ -12,7 +13,8 @@ class TokenAuthToken(
     private val headerTS: Int,
     private val headerSign: String,
     private val userData: UserData? = null,
-    authorities: MutableCollection<out GrantedAuthority>? = null
+    authorities: MutableCollection<out GrantedAuthority>? = null,
+    private val request: HttpServletRequest? = null
 ) : AbstractAuthenticationToken(authorities) {
 
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
@@ -58,4 +60,6 @@ class TokenAuthToken(
     fun getUserProfileImg(): String? {
         return userData?.getUserData()?.profileImg
     }
+
+    fun getRequestPath() = request!!.servletPath
 }
